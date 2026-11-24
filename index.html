@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#c62828">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Munkaidő">
+<title>Munkaidő-nyilvántartó</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#f5f5f7;color:#222;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+header{background:#c62828;color:white;padding:18px 16px 14px;padding-top:max(18px,env(safe-area-inset-top))}
+header h1{font-size:21px;margin:0}
+header p{font-size:13px;margin:5px 0 0;opacity:.9}
+nav{display:flex;overflow-x:auto;background:white;border-bottom:1px solid #ddd;position:sticky;top:0;z-index:5}
+nav button{flex:1;min-width:75px;padding:13px 7px;border:0;background:white;color:#555;font-size:12px}
+nav button.active{color:#c62828;border-bottom:3px solid #c62828;font-weight:bold}
+main{padding:14px;max-width:700px;margin:auto;padding-bottom:40px}
+.panel,.card{background:white;border-radius:14px;padding:15px;margin-bottom:13px;box-shadow:0 1px 4px #0000000c}
+h2{font-size:19px;margin:4px 0 14px}
+h3{font-size:15px;margin:0 0 12px}
+label{display:block;font-size:13px;color:#555;margin:11px 0 5px}
+input,select,textarea{width:100%;padding:12px;border:1px solid #ccc;border-radius:9px;background:white;font-size:16px;color:#222}
+button{cursor:pointer}
+.primary{background:#c62828;color:white;border:0;border-radius:10px;padding:13px 16px;font-size:15px;font-weight:600;width:100%;margin-top:12px}
+.secondary{background:#eee;color:#222;border:0;border-radius:9px;padding:10px 13px;font-size:14px}
+.danger{background:#ffebee;color:#b71c1c;border:0;border-radius:8px;padding:8px 12px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.metric{background:#fff;border:1px solid #f0dada;border-radius:12px;padding:12px}
+.metric small{display:block;color:#777;font-size:12px}
+.metric strong{display:block;color:#c62828;font-size:19px;margin-top:5px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.day{text-align:center;padding:10px 0;border-radius:9px;background:#f1f1f1;font-size:14px;min-height:39px}
+.day.work{background:#ffebee;color:#b71c1c}
+.day.vacation{background:#e8f5e9;color:#247a32}
+.day.sick{background:#fff3e0;color:#a65a00}
+.day.selected{outline:2px solid #c62828;font-weight:bold}
+.dayname{text-align:center;font-size:11px;color:#777;padding:5px 0}
+.entry{border-top:1px solid #eee;padding:12px 0}
+.entry:first-child{border-top:0}
+.muted{color:#777;font-size:13px}
+.hidden{display:none!important}
+canvas{width:100%;height:190px}
+@media(min-width:520px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+</style>
+</head>
+<body>
+<header>
+<h1 id="heading">Munkaidő-nyilvántartó</h1>
+<p id="subheading">Saját munkaidő és bérkimutatás</p>
+</header>
+<nav>
+<button class="active" data-page="calendar">Naptár</button>
+<button data-page="driving">Vezetés</button>
+<button data-page="monthly">Havi bér</button>
+<button data-page="yearly">Éves</button>
+<button data-page="settings">Beállítások</button>
+</nav>
+<main>
+<section id="calendar" class="page">
+<div class="grid" id="topMetrics"></div>
+<div class="panel">
+<div class="row">
+<button class="secondary" onclick="changeMonth(-1)">‹</button>
+<h2 id="monthTitle"></h2>
+<button class="secondary" onclick="changeMonth(1)">›</button>
+</div>
+<div class="days" id="calendarGrid"></div>
+<button class="primary" onclick="newWork()">+ Új napi bejegyzés</button>
+</div>
+<div class="panel">
+<h3 id="editorTitle">Napi bejegyzés</h3>
+<label>Dátum</label><input type="date" id="workDate">
+<label>Nap típusa</label>
+<select id="category" onchange="toggleWorkFields()">
+<option>Munka</option><option>Szabadság</option><option>Betegszabadság</option><option>Nem dolgoztam</option>
+</select>
+<div id="workFields">
+<label>Kezdés</label><input type="time" id="start" value="08:00">
+<label>Befejezés</label><input type="time" id="end" value="16:00">
+<label>Szünet (perc)</label><input type="number" id="breakMinutes" min="0" value="0">
+<label>Tervezett órák</label><input type="number" id="planned" min="0" max="24" step="0.5" value="8">
+<label>Munkavégzés helye</label><input id="workplace" value="Műhely">
+<label>Napi bónusz (%)</label><input type="number" id="bonus" min="0" value="0">
+<p class="muted" id="workedPreview">Ledolgozott idő: 8,00 óra</p>
+</div>
+<div id="leaveFields" class="hidden">
+<label>Elszámolt órák</label><input type="number" id="leaveHours" min="0" max="24" step="0.5" value="8">
+</div>
+<button class="primary" onclick="saveWork()">Bejegyzés mentése</button>
+<button class="secondary" onclick="deleteWork()" id="deleteWorkButton">Bejegyzés törlése</button>
+</div>
+<div class="panel">
+<h3>Heti összesítés</h3>
+<div class="grid">
+<div class="metric"><small>Normál órák</small><strong id="weekNormal">0,00</strong></div>
+<div class="metric"><small>Túlóra</small><strong id="weekExtra">0,00</strong></div>
+<div class="metric"><small>Összesen</small><strong id="weekTotal">0,00</strong></div>
+</div>
+</div>
+</section>
+
+<section id="driving" class="page hidden">
+<h2>Vezetési napló</h2>
+<div class="panel">
+<label>Dátum</label><input type="date" id="driveDate">
+<label>Kezdő kilométeróra</label><input type="number" id="startKm" min="0" step="0.1">
+<label>Záró kilométeróra</label><input type="number" id="endKm" min="0" step="0.1">
+<label>Indulás</label><input type="time" id="departure" value="08:00">
+<label>Érkezés</label><input type="time" id="arrival" value="16:00">
+<label>Megjegyzés / útvonal</label><input id="driveNote">
+<button class="primary" onclick="saveDrive()">Vezetési bejegyzés mentése</button>
+</div>
+<div class="panel">
+<h3>Korábbi vezetési napok</h3>
+<div id="driveList"></div>
+</div>
+</section>
+
+<section id="monthly" class="page hidden">
+<h2>Havi bérkimutatás</h2>
+<div class="panel">
+<label>Hónap</label><input type="month" id="reportMonth" onchange="renderMonthly()">
+<div id="monthlyResults"></div>
+</div>
+<div class="panel">
+<h3>HTML-kimutatás</h3>
+<button class="primary" onclick="exportHTML()">Havi kimutatás letöltése</button>
+</div>
+</section>
+
+<section id="yearly" class="page hidden">
+<h2>Éves összesítés</h2>
+<div class="panel">
+<label>Év</label><input type="number" id="reportYear" onchange="renderYearly()">
+<div id="yearlyResults"></div>
+</div>
+</section>
+
+<section id="settings" class="page hidden">
+<h2>Beállítások</h2>
+<div class="panel">
+<h3>Dolgozó adatai</h3>
+<label>Dolgozó neve</label><input id="employeeName" value="Kiss János">
+</div>
+<div class="panel">
+<h3>Munkabér</h3>
+<label>Nettó órabér (Ft)</label><input type="number" id="hourlyRate" value="3000">
+<label>Túlóra díjazása (%)</label><input type="number" id="overtimePercent" value="150">
+<label>Betegszabadság díjazása (%)</label><input type="number" id="sickPercent" value="70">
+</div>
+<div class="panel">
+<h3>Szabadság</h3>
+<label>Éves szabadságkeret (nap)</label><input type="number" id="vacationAllowance" value="25">
+</div>
+<button class="primary" onclick="saveSettings()">Beállítások mentése</button>
+</section>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+const today=()=>new Date().toISOString().slice(0,10);
+let works=JSON.parse(localStorage.getItem("works")||"[]");
+let drives=JSON.parse(localStorage.getItem("drives")||"[]");
+let settings=JSON.parse(localStorage.getItem("settings")||"{}");
+let selectedDate=today(), editDate=null;
+function persist(){localStorage.setItem("works",JSON.stringify(works));localStorage.setItem("drives",JSON.stringify(drives))}
+function fmt(n){return Number(n||0).toLocaleString("hu-HU",{minimumFractionDigits:2,maximumFractionDigits:2})}
+function money(n){return Math.round(n||0).toLocaleString("hu-HU")+" Ft"}
+function hours(e){
+ if(e.category!=="Munka")return 0;
+ let [sh,sm]=e.start.split(":").map(Number),[eh,em]=e.end.split(":").map(Number);
+ let a=sh*60+sm,b=eh*60+em;if(b<a)b+=1440;
+ return Math.max(0,(b-a-(Number(e.breakMinutes)||0))/60);
+}
+function overtime(e){return Math.max(0,hours(e)-(Number(e.planned)||0))}
+function monthEntries(m){return works.filter(e=>e.date.startsWith(m))}
+function currentMonth(){return selectedDate.slice(0,7)}
+function showPage(p){
+ document.querySelectorAll(".page").forEach(x=>x.classList.add("hidden"));
+ $(p).classList.remove("hidden");
+ document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===p));
+ if(p==="monthly")renderMonthly();if(p==="yearly")renderYearly();if(p==="driving")renderDrives();
+}
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>showPage(b.dataset.page));
+function loadSettings(){
+ $("employeeName").value=settings.name||"Kiss János";
+ $("hourlyRate").value=settings.rate??3000;
+ $("overtimePercent").value=settings.overtime??150;
+ $("sickPercent").value=settings.sick??70;
+ $("vacationAllowance").value=settings.vacation??25;
+ updateHeader();
+}
+function updateHeader(){$("heading").textContent=settings.name||"Munkaidő-nyilvántartó"}
+function saveSettings(){
+ settings={name:$("employeeName").value,rate:Number($("hourlyRate").value)||0,overtime:Number($("overtimePercent").value)||150,sick:Number($("sickPercent").value)||70,vacation:Number($("vacationAllowance").value)||0};
+ localStorage.setItem("settings",JSON.stringify(settings));updateHeader();renderAll();alert("Beállítások elmentve.");
+}
+function changeMonth(delta){
+ let d=new Date(selectedDate+"T12:00:00");d.setMonth(d.getMonth()+delta);selectedDate=d.toISOString().slice(0,10);renderCalendar();
+}
+function renderCalendar(){
+ let d=new Date(selectedDate+"T12:00:00"),y=d.getFullYear(),m=d.getMonth();
+ $("monthTitle").textContent=d.toLocaleDateString("hu-HU",{year:"numeric",month:"long"});
+ let first=new Date(y,m,1),offset=(first.getDay()+6)%7,days=new Date(y,m+1,0).getDate();
+ let html=["H","K","Sze","Cs","P","Szo","V"].map(x=>`<div class="dayname">${x}</div>`).join("");
+ for(let i=0;i<offset;i++)html+='<div></div>';
+ for(let day=1;day<=days;day++){
+  let date=`${y}-${String(m+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
+  let e=works.find(x=>x.date===date),cls=e?(e.category==="Munka"?"work":e.category==="Szabadság"?"vacation":e.category==="Betegszabadság"?"sick":""):"";
+  html+=`<button class="day ${cls} ${date===selectedDate?"selected":""}" onclick="selectDay('${date}')">${day}</button>`;
+ }
+ $("calendarGrid").innerHTML=html;
+ let month=monthEntries(selectedDate.slice(0,7)),normal=month.reduce((s,e)=>s+Math.max(0,hours(e)-overtime(e)),0),extra=month.reduce((s,e)=>s+overtime(e),0),pay=calculate(month).total;
+ $("topMetrics").innerHTML=metricHTML("Ledolgozott idő",fmt(normal+extra)+" óra")+metricHTML("Túlóra",fmt(extra)+" óra")+metricHTML("Nettó bér",money(pay));
+ renderWeek();
+}
+function metricHTML(t,v){return `<div class="metric"><small>${t}</small><strong>${v}</strong></div>`}
+function selectDay(date){selectedDate=date;let e=works.find(x=>x.date===date);loadWork(e);renderCalendar()}
+function newWork(){editDate=null;loadWork(null)}
+function loadWork(e){
+ let date=e?.date||selectedDate;
+ $("workDate").value=date;$("category").value=e?.category||"Munka";
+ $("start").value=e?.start||"08:00";$("end").value=e?.end||"16:00";
+ $("breakMinutes").value=e?.breakMinutes??0;$("planned").value=e?.planned??8;
+ $("workplace").value=e?.workplace||"Műhely";$("bonus").value=e?.bonus??0;
+ $("leaveHours").value=e?.leaveHours??8;
+ editDate=e?date:null;$("deleteWorkButton").classList.toggle("hidden",!e);
+ toggleWorkFields();preview();
+}
+function toggleWorkFields(){
+ let c=$("category").value;$("workFields").classList.toggle("hidden",c!=="Munka");
+ $("leaveFields").classList.toggle("hidden",c!=="Szabadság"&&c!=="Betegszabadság");
+}
+function preview(){
+ let e={category:"Munka",start:$("start").value,end:$("end").value,breakMinutes:$("breakMinutes").value};
+ $("workedPreview").textContent="Ledolgozott idő: "+fmt(hours(e))+" óra";
+}
+["start","end","breakMinutes"].forEach(id=>$(id).addEventListener("input",preview));
+function saveWork(){
+ let date=$("workDate").value;if(!date)return alert("Válassz dátumot!");
+ let e={date,category:$("category").value,start:$("start").value,end:$("end").value,breakMinutes:Number($("breakMinutes").value)||0,planned:Number($("planned").value)||0,workplace:$("workplace").value||"Műhely",bonus:Number($("bonus").value)||0,leaveHours:Number($("leaveHours").value)||0};
+ works=works.filter(x=>x.date!==date);works.push(e);selectedDate=date;persist();renderAll();alert("Napi bejegyzés elmentve.");
+}
+function deleteWork(){if(!editDate)return;works=works.filter(x=>x.date!==editDate);persist();newWork();renderAll()}
+function renderWeek(){
+ let d=new Date(selectedDate+"T12:00:00"),day=(d.getDay()+6)%7;d.setDate(d.getDate()-day);
+ let dates=Array.from({length:7},(_,i)=>{let x=new Date(d);x.setDate(x.getDate()+i);return x.toISOString().slice(0,10)});
+ let es=works.filter(e=>dates.includes(e.date)&&e.category==="Munka");
+ let total=es.reduce((s,e)=>s+hours(e),0),extra=es.reduce((s,e)=>s+overtime(e),0);
+ $("weekNormal").textContent=fmt(total-extra);$("weekExtra").textContent=fmt(extra);$("weekTotal").textContent=fmt(total);
+}
+function calculate(es){
+ let normal=0,extra=0,vac=0,sick=0,bonus=0;
+ es.forEach(e=>{
+ if(e.category==="Munka"){let h=hours(e),o=overtime(e);normal+=h-o;extra+=o;bonus+=h*(Number(e.bonus)||0)/100*(settings.rate||3000)}
+ if(e.category==="Szabadság")vac+=Number(e.leaveHours)||0;
+ if(e.category==="Betegszabadság")sick+=Number(e.leaveHours)||0;
+ });
+ let rate=Number(settings.rate??3000),total=normal*rate+extra*rate*(Number(settings.overtime??150)/100)+vac*rate+sick*rate*(Number(settings.sick??70)/100)+bonus;
+ return {normal,extra,vac,sick,bonus,total};
+}
+function renderMonthly(){
+ let m=$("reportMonth").value||currentMonth();$("reportMonth").value=m;
+ let es=monthEntries(m),c=calculate(es);
+ let km=drives.filter(e=>e.date.startsWith(m)).reduce((s,e)=>s+Math.max(0,Number(e.endKm)-Number(e.startKm)),0);
+ let driving=drives.filter(e=>e.date.startsWith(m)).reduce((s,e)=>s+duration(e.departure,e.arrival),0);
+ $("monthlyResults").innerHTML=[
+ ["Normál munkaórák",fmt(c.normal)+" óra"],["Túlórák",fmt(c.extra)+" óra"],
+ ["Szabadság",fmt(c.vac)+" óra"],["Betegszabadság",fmt(c.sick)+" óra"],
+ ["Normál munkabér",money(c.normal*(settings.rate||3000))],
+ ["Túlóradíj",money(c.extra*(settings.rate||3000)*(settings.overtime||150)/100)],
+ ["Bónusz",money(c.bonus)],["Szabadság díja",money(c.vac*(settings.rate||3000))],
+ ["Betegszabadság díja",money(c.sick*(settings.rate||3000)*(settings.sick||70)/100)],
+ ["Havi nettó összesen",money(c.total)],["Vezetett kilométer",fmt(km)+" km"],["Vezetési idő",fmt(driving)+" óra"]
+ ].map(x=>`<div class="row entry"><span>${x[0]}</span><strong>${x[1]}</strong></div>`).join("");
+}
+function duration(a,b){if(!a||!b)return 0;let [h,m]=a.split(":").map(Number),[x,y]=b.split(":").map(Number),s=x*60+y-(h*60+m);if(s<0)s+=1440;return s/60}
+function saveDrive(){
+ let e={date:$("driveDate").value||today(),startKm:Number($("startKm").value)||0,endKm:Number($("endKm").value)||0,departure:$("departure").value,arrival:$("arrival").value,note:$("driveNote").value};
+ drives.push(e);persist();renderDrives();alert("Vezetési bejegyzés elmentve.");
+}
+function renderDrives(){
+ $("driveList").innerHTML=drives.slice().sort((a,b)=>b.date.localeCompare(a.date)).map((e,i)=>`<div class="entry"><strong>${e.date}</strong><p>${fmt(e.endKm-e.startKm)} km · ${fmt(duration(e.departure,e.arrival))} óra</p><p class="muted">${e.note||""}</p><button class="danger" onclick="removeDrive(${drives.indexOf(e)})">Törlés</button></div>`).join("")||'<p class="muted">Még nincs vezetési bejegyzés.</p>';
+}
+function removeDrive(i){drives.splice(i,1);persist();renderDrives()}
+function renderYearly(){
+ let y=Number($("reportYear").value)||new Date().getFullYear();$("reportYear").value=y;
+ let es=works.filter(e=>e.date.startsWith(String(y))),c=calculate(es);
+ let vacation=es.filter(e=>e.category==="Szabadság").length,sick=es.filter(e=>e.category==="Betegszabadság").length;
+ $("yearlyResults").innerHTML=[
+ ["Ledolgozott órák",fmt(c.normal+c.extra)+" óra"],["Túlórák",fmt(c.extra)+" óra"],
+ ["Éves nettó bér",money(c.total)],["Szabadságkeret",settings.vacation??25+" nap"],
+ ["Felhasznált szabadság",vacation+" nap"],["Betegszabadság",sick+" nap"]
+ ].map(x=>`<div class="row entry"><span>${x[0]}</span><strong>${x[1]}</strong></div>`).join("");
+}
+function exportHTML(){
+ let m=$("reportMonth").value||currentMonth(),es=monthEntries(m).slice().sort((a,b)=>a.date.localeCompare(b.date));
+ let rows=es.map(e=>`<tr><td>${e.date}</td><td>${e.category==="Munka"?e.workplace:e.category}</td><td>${e.category==="Munka"?e.start:""}</td><td>${e.category==="Munka"?e.end:""}</td><td>${e.category==="Munka"?fmt(hours(e))+" óra":fmt(e.leaveHours)+" óra"}</td></tr>`).join("");
+ let total=es.reduce((s,e)=>s+hours(e),0);
+ let html=`<!DOCTYPE html><html lang="hu"><meta charset="UTF-8"><title>Munkaidő-kimutatás</title><style>body{font-family:Arial;margin:25px}h1{color:#c62828}table{border-collapse:collapse;width:100%}td,th{border:1px solid #ccc;padding:9px;text-align:center}th{background:#c62828;color:white}</style><h1>Havi munkaidő-kimutatás</h1><p>Dolgozó neve: ${settings.name||"Kiss János"}</p><p>Hónap: ${m}</p><table><tr><th>Dátum</th><th>Munkavégzés helye</th><th>Kezdés</th><th>Befejezés</th><th>Ledolgozott idő</th></tr>${rows}</table><h3>Összes ledolgozott idő: ${fmt(total)} óra</h3></html>`;
+ let blob=new Blob([html],{type:"text/html;charset=utf-8"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="munkaido-kimutatas.html";a.click();URL.revokeObjectURL(url);
+}
+function renderAll(){renderCalendar();renderMonthly();renderYearly();renderDrives()}
+$("reportMonth").value=currentMonth();$("reportYear").value=new Date().getFullYear();
+$("driveDate").value=today();loadSettings();loadWork(null);renderAll();
+</script>
+</body>
+</html>
