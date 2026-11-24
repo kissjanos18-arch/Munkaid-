@@ -303,6 +303,7 @@ button:active{
 <div class="grid">
 <div class="metric"><small>Normál órák</small><strong id="weekNormal">0,00</strong></div>
 <div class="metric"><small>Túlóra</small><strong id="weekExtra">0,00</strong></div>
+  <div class="metric"><small>Szabadság</small><strong id="weekVacation">0,00</strong></div>
 <div class="metric"><small>Összesen</small><strong id="weekTotal">0,00</strong></div>
 </div>
 </div>
@@ -464,11 +465,28 @@ function saveWork(){
 }
 function deleteWork(){if(!editDate)return;works=works.filter(x=>x.date!==editDate);persist();newWork();renderAll()}
 function renderWeek(){
- let d=new Date(selectedDate+"T12:00:00"),day=(d.getDay()+6)%7;d.setDate(d.getDate()-day);
- let dates=Array.from({length:7},(_,i)=>{let x=new Date(d);x.setDate(x.getDate()+i);return x.toISOString().slice(0,10)});
+ let d=new Date(selectedDate+"T12:00:00"),day=(d.getDay()+6)%7;
+ d.setDate(d.getDate()-day);
+
+ let dates=Array.from({length:7},(_,i)=>{
+   let x=new Date(d);
+   x.setDate(x.getDate()+i);
+   return x.toISOString().slice(0,10);
+ });
+
  let es=works.filter(e=>dates.includes(e.date)&&e.category==="Munka");
- let total=es.reduce((s,e)=>s+hours(e),0),extra=es.reduce((s,e)=>s+overtime(e),0);
- $("weekNormal").textContent=fmt(total-extra);$("weekExtra").textContent=fmt(extra);$("weekTotal").textContent=fmt(total);
+
+ let total=es.reduce((s,e)=>s+hours(e),0);
+ let extra=es.reduce((s,e)=>s+overtime(e),0);
+
+ let vacation=works
+   .filter(e=>dates.includes(e.date)&&e.category==="Szabadság")
+   .reduce((s,e)=>s+(Number(e.leaveHours)||0),0);
+
+ $("weekNormal").textContent=fmt(total-extra);
+ $("weekExtra").textContent=fmt(extra);
+ $("weekVacation").textContent=fmt(vacation);
+ $("weekTotal").textContent=fmt(total+vacation);
 }
 function calculate(es){
  let normal=0,extra=0,vac=0,sick=0,bonus=0;
@@ -502,6 +520,12 @@ function renderMonthly(){
 
  let es=monthEntries(m);
  let c=calculate(es);
+  let rate=Number(settings.rate??3000);
+let normalPay=c.normal*rate;
+let overtimePay=c.extra*rate*(Number(settings.overtime??150)/100);
+let vacationPay=c.vac*rate;
+let sickPay=c.sick*rate*(Number(settings.sick??70)/100);
+let bonusPay=c.bonus;
 
  let workEntries=es.filter(e=>e.category==="Munka");
  let totalHours=workEntries.reduce((s,e)=>s+hours(e),0);
@@ -588,10 +612,16 @@ function renderMonthly(){
 
  $("monthlyResults").innerHTML=
  `<h3>Havi munkaidő</h3>
- <div class="row entry"><span>Összes ledolgozott idő</span><strong>${fmt(totalHours)} óra</strong></div>
+<div class="row entry"><span>Összes ledolgozott idő</span><strong>${fmt(totalHours)} óra</strong></div>
  <div class="row entry"><span>Túlóra</span><strong>${fmt(c.extra)} óra</strong></div>
- <div class="row entry"><span>Havi nettó bér</span><strong>${money(c.total)}</strong></div>
 
+ <h3>Havi bér részletezése</h3>
+ <div class="row entry"><span>Alap munkabér</span><strong>${money(normalPay)}</strong></div>
+ <div class="row entry"><span>Túlóra díja</span><strong>${money(overtimePay)}</strong></div>
+ <div class="row entry"><span>Szabadság díja</span><strong>${money(vacationPay)}</strong></div>
+ <div class="row entry"><span>Betegszabadság díja</span><strong>${money(sickPay)}</strong></div>
+ <div class="row entry"><span>Bónusz</span><strong>${money(bonusPay)}</strong></div>
+ <div class="row entry"><strong>Összes nettó bér</strong><strong>${money(c.total)}</strong></div>
  <h3>Munkaórák munkahelyenként</h3>
  ${chart}
  ${legend}
