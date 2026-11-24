@@ -647,6 +647,40 @@ function renderDrives(){
  $("driveList").innerHTML=drives.slice().sort((a,b)=>b.date.localeCompare(a.date)).map((e,i)=>`<div class="entry"><strong>${e.date}</strong><p>${fmt(e.endKm-e.startKm)} km · ${fmt(duration(e.departure,e.arrival))} óra</p><p class="muted">${e.note||""}</p><button class="danger" onclick="removeDrive(${drives.indexOf(e)})">Törlés</button></div>`).join("")||'<p class="muted">Még nincs vezetési bejegyzés.</p>';
 }
 function removeDrive(i){drives.splice(i,1);persist();renderDrives()}
+  function saveDrive(){
+ let startKm=Number($("startKm").value);
+ let endKm=Number($("endKm").value);
+ let departure=$("departure").value;
+ let arrival=$("arrival").value;
+
+ if(!departure || !arrival || $("startKm").value==="" || $("endKm").value===""){
+  alert("Kérlek, tölts ki minden kötelező mezőt!");
+  return;
+ }
+
+ if(endKm<startKm){
+  alert("A záró kilométeróra nem lehet kisebb a kezdőnél!");
+  return;
+ }
+
+ drives.push({
+  date:selectedDate,
+  startKm,
+  endKm,
+  departure,
+  arrival,
+  note:$("driveNote").value
+ });
+
+ persist();
+ renderDrives();
+
+ $("startKm").value="";
+ $("endKm").value="";
+ $("driveNote").value="";
+
+ alert("A vezetési bejegyzés elmentve!");
+}
 function renderYearly(){
  let y=Number($("reportYear").value)||new Date().getFullYear();$("reportYear").value=y;
  let es=works.filter(e=>e.date.startsWith(String(y))),c=calculate(es);
