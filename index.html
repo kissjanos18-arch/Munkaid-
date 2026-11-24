@@ -376,9 +376,20 @@ function persist(){localStorage.setItem("works",JSON.stringify(works));localStor
 function fmt(n){return Number(n||0).toLocaleString("hu-HU",{minimumFractionDigits:2,maximumFractionDigits:2})}
 function money(n){return Math.round(n||0).toLocaleString("hu-HU")+" Ft"}
 function hours(e){
- if(e.category!=="Munka")return 0;
- let [sh,sm]=e.start.split(":").map(Number),[eh,em]=e.end.split(":").map(Number);
- let a=sh*60+sm,b=eh*60+em;if(b<a)b+=1440;
+ if(!e || e.category!=="Munka")return 0;
+ if(!e.start || !e.end)return 0;
+
+ let [sh,sm]=e.start.split(":").map(Number);
+ let [eh,em]=e.end.split(":").map(Number);
+
+ if(!Number.isFinite(sh)||!Number.isFinite(sm)||
+    !Number.isFinite(eh)||!Number.isFinite(em))return 0;
+
+ let a=sh*60+sm;
+ let b=eh*60+em;
+
+ if(b<a)b+=1440;
+
  return Math.max(0,(b-a-(Number(e.breakMinutes)||0))/60);
 }
 function overtime(e){return Math.max(0,hours(e)-(Number(e.planned)||0))}
@@ -468,6 +479,22 @@ function calculate(es){
  });
  let rate=Number(settings.rate??3000),total=normal*rate+extra*rate*(Number(settings.overtime??150)/100)+vac*rate+sick*rate*(Number(settings.sick??70)/100)+bonus;
  return {normal,extra,vac,sick,bonus,total};
+}
+  function duration(a,b){
+ if(!a || !b)return 0;
+
+ let [sh,sm]=a.split(":").map(Number);
+ let [eh,em]=b.split(":").map(Number);
+
+ if(!Number.isFinite(sh)||!Number.isFinite(sm)||
+    !Number.isFinite(eh)||!Number.isFinite(em))return 0;
+
+ let start=sh*60+sm;
+ let end=eh*60+em;
+
+ if(end<start)end+=1440;
+
+ return Math.max(0,(end-start)/60);
 }
 function renderMonthly(){
  let m=$("reportMonth").value||currentMonth();
