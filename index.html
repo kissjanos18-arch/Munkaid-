@@ -267,7 +267,11 @@ function renderMonthly(){
  let m=$("reportMonth").value||currentMonth();
  $("reportMonth").value=m;
 
- let es=monthEntries(m),c=calculate(es);
+ let es=monthEntries(m);
+ let c=calculate(es);
+
+ let workEntries=es.filter(e=>e.category==="Munka");
+ let totalHours=workEntries.reduce((s,e)=>s+hours(e),0);
 
  let km=drives.filter(e=>e.date.startsWith(m))
    .reduce((s,e)=>s+Math.max(0,Number(e.endKm)-Number(e.startKm)),0);
@@ -275,55 +279,94 @@ function renderMonthly(){
  let driving=drives.filter(e=>e.date.startsWith(m))
    .reduce((s,e)=>s+duration(e.departure,e.arrival),0);
 
+ // Heti munkaórák
  let [year,month]=m.split("-").map(Number);
  let first=new Date(year,month-1,1);
  let last=new Date(year,month,0);
-
  let weeks=[];
  let weekStart=new Date(first);
+
+ const dateKey=d=>{
+   let y=d.getFullYear();
+   let mo=String(d.getMonth()+1).padStart(2,"0");
+   let day=String(d.getDate()).padStart(2,"0");
+   return `${y}-${mo}-${day}`;
+ };
 
  while(weekStart<=last){
    let weekEnd=new Date(weekStart);
    weekEnd.setDate(weekEnd.getDate()+6);
    if(weekEnd>last) weekEnd=new Date(last);
 
-   let startText=weekStart.toISOString().slice(0,10);
-   let endText=weekEnd.toISOString().slice(0,10);
+   let startText=dateKey(weekStart);
+   let endText=dateKey(weekEnd);
 
- let weekHours=es
-     .filter(e=>e.date>=startText && e.date<=endText && e.category==="Munka")
+   let weekHours=workEntries
+     .filter(e=>e.date>=startText && e.date<=endText)
      .reduce((s,e)=>s+hours(e),0);
 
    weeks.push(
-     `<div class="row entry"><span>${weekStart.getDate()}–${weekEnd.getDate()}. nap</span><strong>${fmt(weekHours)} óra</strong></div>`
+     `<div class="row entry">
+       <span>${weekStart.getDate()}–${weekEnd.getDate()}.</span>
+       <strong>${fmt(weekHours)} óra</strong>
+     </div>`
    );
 
    weekStart=new Date(weekEnd);
    weekStart.setDate(weekStart.getDate()+1);
  }
 
+ // Munkahelyenkénti órák
+ let places={};
+
+ workEntries.forEach(e=>{
+   let place=e.workplace||"Nincs megadva";
+   places[place]=(places[place]||0)+hours(e);
+ });
+
+ let colors=["#c62828","#1976d2","#2e9d50","#f39c12","#8e44ad","#00897b"];
+ let placeList=Object.entries(places);
+ let current=0;
+
+ let gradient=placeList.map(([name,h],i)=>{
+   let start=current;
+   current+=totalHours>0?h/totalHours*100:0;
+   return `${colors[i%colors.length]} ${start}% ${current}%`;
+ }).join(",");
+
+ let safeName=name=>String(name).replace(/[&<>"']/g,ch=>({
+   "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+ })[ch]);
+
+ let chart=totalHours>0
+   ? `<div style="width:155px;height:155px;border-radius:50%;background:conic-gradient(${gradient});margin:12px auto;"></div>`
+   : `<p>Nincs ledolgozott munkaóra ebben a hónapban.</p>`;
+
+ let legend=placeList.map(([name,h],i)=>
+   `<div class="row entry">
+     <span><span style="display:inline-block;width:11px;height:11px;border-radius:50%;background:${colors[i%colors.length]};margin-right:7px"></span>${safeName(name)}</span>
+     <strong>${fmt(h)} óra</strong>
+   </div>`
+ ).join("");
+
  $("monthlyResults").innerHTML=
- `<h3>Heti munkaórák</h3>${weeks.join("")}`+
- `<h3>Havi összesítés</h3>`+
- [
- ["Normál munkaórák",fmt(c.normal)+" óra"],
- ["Túlórák",fmt(c.extra)+" óra"],
- ["Szabadság",fmt(c.vac)+" óra"],
- ["Betegszabadság",fmt(c.sick)+" óra"],
- ["Normál munkabér",money(c.normal*(settings.rate||3000))],
- ["Túlóradíj",money(c.extra*(settings.rate||3000)*(settings.overtime||150)/100)],
- ["Bónusz",money(c.bonus)],
- ["Szabadság díja",money(c.vac*(settings.rate||3000))],
- ["Betegszabadság díja",money(c.sick*(settings.rate||3000)*(settings.sick||70)/100)],
- ["Havi nettó összesen",money(c.total)],
- ["Vezetett kilométer",fmt(km)+" km"],
- ["Vezetési idő",fmt(driving)+" óra"]
- ].map(x=>`<div class="row entry"><span>${x[0]}</span><strong>${x[1]}</strong></div>`).join("");
-}
-function duration(a,b){if(!a||!b)return 0;let [h,m]=a.split(":").map(Number),[x,y]=b.split(":").map(Number),s=x*60+y-(h*60+m);if(s<0)s+=1440;return s/60}
-function saveDrive(){
- let e={date:$("driveDate").value||today(),startKm:Number($("startKm").value)||0,endKm:Number($("endKm").value)||0,departure:$("departure").value,arrival:$("arrival").value,note:$("driveNote").value};
- drives.push(e);persist();renderDrives();alert("Vezetési bejegyzés elmentve.");
+ `<h3>Havi munkaidő</h3>
+ <div class="row entry"><span>Összes ledolgozott idő</span><strong>${fmt(totalHours)} óra</strong></div>
+ <div class="row entry"><span>Túlóra</span><strong>${fmt(c.extra)} óra</strong></div>
+ <div class="row entry"><span>Havi nettó bér</span><strong>${money(c.total)}</strong></div>
+
+ <h3>Munkaórák munkahelyenként</h3>
+ ${chart}
+ ${legend}
+
+ <h3>Heti munkaórák</h3>
+ ${weeks.join("")}
+
+ <h3>Egyéb összesítés</h3>
+ <div class="row entry"><span>Szabadság</span><strong>${fmt(c.vac)} óra</strong></div>
+ <div class="row entry"><span>Betegszabadság</span><strong>${fmt(c.sick)} óra</strong></div>
+ <div class="row entry"><span>Vezetett kilométer</span><strong>${fmt(km)} km</strong></div>
+ <div class="row entry"><span>Vezetési idő</span><strong>${fmt(driving)} óra</strong></div>`;
 }
 function renderDrives(){
  $("driveList").innerHTML=drives.slice().sort((a,b)=>b.date.localeCompare(a.date)).map((e,i)=>`<div class="entry"><strong>${e.date}</strong><p>${fmt(e.endKm-e.startKm)} km · ${fmt(duration(e.departure,e.arrival))} óra</p><p class="muted">${e.note||""}</p><button class="danger" onclick="removeDrive(${drives.indexOf(e)})">Törlés</button></div>`).join("")||'<p class="muted">Még nincs vezetési bejegyzés.</p>';
@@ -341,7 +384,7 @@ function renderYearly(){
 }
 function exportHTML(){
  let m=$("reportMonth").value||currentMonth(),es=monthEntries(m).slice().sort((a,b)=>a.date.localeCompare(b.date));
- let rows=es.map(e=>`<tr><td>${e.date}</td><td>${e.category==="Munka"?e.workplace:e.category}</td><td>${e.category==="Munka"?e.start:""}</td><td>${e.category==="Munka"?e.end:""}</td><td>${e.category==="Munka"?fmt(hours(e))+" óra":fmt(e.leaveHours)+" óra"}</td></tr>`).join("");
+ let rows=es.map(e=>`<tr><td>${e.date}</td><td>${e.category==="Munka"?(e.workplace||""):(e.category==="Szabadság"||e.category==="Betegszabadság"?e.category:"")}</td><td>${e.category==="Munka"?e.start:""}</td><td>${e.category==="Munka"?e.end:""}</td><td>${e.category==="Munka"?fmt(hours(e))+" óra":(e.category==="Szabadság"||e.category==="Betegszabadság"?(Number(e.leaveHours)||0)+" óra":"")}</td></tr>`).join("");
  let total=es.reduce((s,e)=>s+hours(e),0);
  let html=`<!DOCTYPE html><html lang="hu"><meta charset="UTF-8"><title>Munkaidő-kimutatás</title><style>body{font-family:Arial;margin:25px}h1{color:#c62828}table{border-collapse:collapse;width:100%}td,th{border:1px solid #ccc;padding:9px;text-align:center}th{background:#c62828;color:white}</style><h1>Havi munkaidő-kimutatás</h1><p>Dolgozó neve: ${settings.name||"Kiss János"}</p><p>Hónap: ${m}</p><table><tr><th>Dátum</th><th>Munkavégzés helye</th><th>Kezdés</th><th>Befejezés</th><th>Ledolgozott idő</th></tr>${rows}</table><h3>Összes ledolgozott idő: ${fmt(total)} óra</h3></html>`;
  let blob=new Blob([html],{type:"text/html;charset=utf-8"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="munkaido-kimutatas.html";a.click();URL.revokeObjectURL(url);
