@@ -169,6 +169,9 @@ button:active{
   font-size:13px;
  }
 }
+ .hidden{
+  display:none!important;
+}
 </style>
 </head>
 <body>
@@ -310,6 +313,7 @@ function showPage(p){
  if(p==="monthly")renderMonthly();if(p==="yearly")renderYearly();if(p==="driving")renderDrives();
 }
 document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>showPage(b.dataset.page));
+ showPage("calendar");
 function loadSettings(){
  $("employeeName").value=settings.name||"Kiss János";
  $("hourlyRate").value=settings.rate??3000;
