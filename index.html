@@ -535,6 +535,9 @@ let bonusPay=c.bonus;
 
  let driving=drives.filter(e=>e.date.startsWith(m))
    .reduce((s,e)=>s+duration(e.departure,e.arrival),0);
+  let drivingPay=driving*rate;
+let kmPay=km*7;
+let totalWithDriving=c.total+drivingPay+kmPay;
 
  // Heti munkaórák
  let [year,month]=m.split("-").map(Number);
@@ -621,7 +624,9 @@ let bonusPay=c.bonus;
  <div class="row entry"><span>Szabadság díja</span><strong>${money(vacationPay)}</strong></div>
  <div class="row entry"><span>Betegszabadság díja</span><strong>${money(sickPay)}</strong></div>
  <div class="row entry"><span>Bónusz</span><strong>${money(bonusPay)}</strong></div>
- <div class="row entry"><strong>Összes nettó bér</strong><strong>${money(c.total)}</strong></div>
+ <div class="row entry"><span>Vezetési idő díja</span><strong>${money(drivingPay)}</strong></div>
+<div class="row entry"><span>Kilométerpénz (7 Ft/km)</span><strong>${money(kmPay)}</strong></div>
+ <div class="row entry"><strong>Összes nettó bér</strong><strong>${money(totalWithDriving)}</strong></div>
  <h3>Munkaórák munkahelyenként</h3>
  ${chart}
  ${legend}
