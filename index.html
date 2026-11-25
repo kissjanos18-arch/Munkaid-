@@ -62,7 +62,7 @@ nav button.active{
  background:linear-gradient(135deg,#b71c1c,#e53935);
  color:white;
  box-shadow:0 4px 12px #c6282835;
-}mmain{
+}main{
  padding:20px;
  max-width:1000px;
  margin:auto;
@@ -482,9 +482,6 @@ function loadWork(e){
  toggleWorkFields();
  preview();
 }
-$("workplace").value=oldPlace;$("bonus").value=e?.bonus??0;
- $("leaveHours").value=e?.leaveHours??8;
- editDate=e?date:null;$("deleteWorkButton").classList.toggle("hidden",!e);
  toggleWorkFields();preview();
 }
 function toggleWorkFields(){
@@ -728,63 +725,26 @@ function renderYearly(){
  ["Felhasznált szabadság",vacation+" nap"],["Betegszabadság",sick+" nap"]
  ].map(x=>`<div class="row entry"><span>${x[0]}</span><strong>${x[1]}</strong></div>`).join("");
 }
-  function addProject(){
-    unction renderProjectOptions(selectedValue=""){
- let select=$("workplace");
- if(!select)return;
+ function loadWork(e){
+ let date=e?.date||selectedDate;
+ $("workDate").value=date;
+ $("category").value=e?.category||"Munka";
+ $("start").value=e?.start||"08:00";
+ $("end").value=e?.end||"16:00";
+ $("breakMinutes").value=e?.breakMinutes??0;
+ $("planned").value=e?.planned??8;
 
- let current=selectedValue || select.value;
- select.innerHTML='<option value="">Válassz projektet</option>';
+ let oldPlace=e?.workplace||"";
+ renderProjectOptions(oldPlace);
+ $("workplace").value=oldPlace;
 
- projects.forEach(p=>{
-  let option=document.createElement("option");
-  option.value=p;
-  option.textContent=p;
-  select.appendChild(option);
- });
+ $("bonus").value=e?.bonus??0;
+ $("leaveHours").value=e?.leaveHours??8;
 
- if(current && !projects.includes(current)){
-  let option=document.createElement("option");
-  option.value=current;
-  option.textContent=current+" (korábbi)";
-  select.appendChild(option);
- }
-
- select.value=current;
-}
-}
-    function addProject(){
- let name=$("newProject").value.trim();
-
- if(!name){
-  alert("Írd be a projekt nevét!");
-  return;
- }
-
- if(projects.some(p=>p.toLowerCase()===name.toLowerCase())){
-  alert("Ez a projekt már létezik!");
-  return;
- }
-
- projects.push(name);
- persist();
- $("newProject").value="";
- renderProjects();
-}
-
-function removeProject(i){
- projects.splice(i,1);
- persist();
- renderProjects();
-}
-
-function renderProjects(){
- $("projectList").innerHTML=projects.map((p,i)=>
-  `<div class="row entry">
-   <strong>${p}</strong>
-   <button class="danger" onclick="removeProject(${i})">Törlés</button>
-  </div>`
- ).join("")||'<p class="muted">Még nincs felvett projekt.</p>';
+ editDate=e?date:null;
+ $("deleteWorkButton").classList.toggle("hidden",!e);
+ toggleWorkFields();
+ preview();
 }
 function exportHTML(){
  let m=$("reportMonth").value||currentMonth(),es=monthEntries(m).slice().sort((a,b)=>a.date.localeCompare(b.date));
