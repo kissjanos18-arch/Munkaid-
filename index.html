@@ -383,6 +383,159 @@ button:active{
   font-size: 13px;
  }
 }
+  input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+select,
+textarea {
+ width: 100%;
+ min-height: 49px;
+ padding: 12px 14px;
+ border: 1px solid #e2e4e8;
+ border-radius: 13px;
+ background: #fafbfc;
+ color: #252525;
+ font-family: inherit;
+ font-size: 16px;
+ line-height: 23px;
+ box-sizing: border-box;
+}
+
+textarea {
+ min-height: 100px;
+ resize: vertical;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+ border-color: #c62828;
+ background: #fff;
+ box-shadow: 0 0 0 3px #c6282818;
+ outline: none;
+}
+
+.primary,
+.secondary,
+.danger {
+ min-height: 44px;
+ font-family: inherit;
+}
+
+.panel,
+.card,
+.drive-calendar-card {
+ box-shadow: 0 6px 22px rgba(30, 35, 45, 0.055);
+}
+  /* RENDEZETT ŰRLAPOK */
+
+label {
+ display: block;
+ margin: 15px 0 7px;
+ font-size: 13px;
+ font-weight: 650;
+ color: #555;
+}
+
+.panel input,
+.panel select,
+.panel textarea {
+ display: block;
+ margin-bottom: 12px;
+}
+
+.drive-time-fields input {
+ margin-bottom: 12px;
+}
+
+button {
+ font-family: inherit;
+}
+
+@media(max-width:480px) {
+ .drive-time-fields {
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+ }
+}
+  /* MODERN KÁRTYÁK ÉS GOMBOK */
+
+.panel,
+.card,
+.drive-calendar-card {
+ border: 1px solid #eceef2;
+ border-radius: 20px;
+ background: #fff;
+ box-shadow: 0 7px 24px rgba(30,35,45,.06);
+}
+
+.primary {
+ border-radius: 14px;
+ background: linear-gradient(135deg,#b71c1c,#ef5350);
+ box-shadow: 0 5px 13px rgba(198,40,40,.2);
+ font-weight: 750;
+}
+
+.secondary {
+ border-radius: 13px;
+}
+
+.danger {
+ border-radius: 12px;
+}
+
+.entry {
+ padding: 16px 4px;
+ border-top: 1px solid #f0f1f3;
+}
+
+h2 {
+ font-weight: 800;
+ letter-spacing: -.3px;
+}
+
+h3 {
+ font-weight: 750;
+ letter-spacing: -.2px;
+}
+  /* MOBILOS ELRENDEZÉS */
+
+@media(max-width:520px) {
+ main {
+  padding: 12px;
+  padding-bottom: 40px;
+ }
+
+ .panel,
+ .card,
+ .drive-calendar-card {
+  padding: 16px;
+  margin-bottom: 15px;
+  border-radius: 18px;
+ }
+
+ nav {
+  gap: 7px;
+  padding: 10px;
+ }
+
+ nav button {
+  min-width: 78px;
+  padding: 12px 10px;
+  border-radius: 12px;
+ }
+
+ .grid {
+  gap: 10px;
+ }
+
+ .metric {
+  padding: 15px;
+  border-radius: 16px;
+ }
+
+ .metric strong {
+  font-size: 22px;
+ }
+}
 </style>
 </head>
 <body>
