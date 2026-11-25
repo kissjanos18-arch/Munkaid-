@@ -379,9 +379,24 @@ button:active{
 }
 
 .drive-time-fields {
+  input, select, textarea {
+ box-sizing: border-box;
+ max-width: 100%;
+ min-width: 0;
+}
+
+.card, .panel, .entry {
+ min-width: 0;
+ max-width: 100%;
+}
  display: grid;
- grid-template-columns: 1fr 1fr;
+ grid-template-columns: repeat(2, minmax(0, 1fr));
  gap: 12px;
+ width: 100%;
+}
+
+.drive-time-fields > * {
+ min-width: 0;
 }
 
 .drive-time-fields label {
@@ -404,6 +419,23 @@ button:active{
   min-height: 39px;
   font-size: 13px;
  }
+  .row {
+ flex-wrap: wrap;
+}
+
+.row > * {
+ min-width: 0;
+ max-width: 100%;
+}
+
+.drive-time-fields > div {
+ min-width: 0;
+}
+
+.drive-time-fields input,
+.drive-time-fields select {
+ width: 100%;
+}
 }
   input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
 select,
