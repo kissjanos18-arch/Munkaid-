@@ -1294,8 +1294,37 @@ if(totalHours>0){
  let circumference=2*Math.PI*68;
  let offset=0;
  let segments="";
+placeList.forEach(([name,h],i)=>{
+  let length=h/totalHours*circumference;
+  let percent=Math.round(h/totalHours*100);
+  let angle=(offset+length/2)/circumference*2*Math.PI;
+  let x=100+68*Math.cos(angle);
+  let y=100+68*Math.sin(angle);
 
- placeList.forEach(([name,h],i)=>{
+  segments+=`
+   <circle cx="100" cy="100" r="68"
+    fill="none"
+    stroke="${colors[i%colors.length]}"
+    stroke-width="27"
+    stroke-linecap="round"
+    stroke-dasharray="${length} ${circumference-length}"
+    stroke-dashoffset="${-offset}"
+    filter="url(#sliceGlow)"/>
+
+   <text x="${x}" y="${y+3}"
+    text-anchor="middle"
+    fill="#ffffff"
+    font-size="8"
+    font-weight="800"
+    stroke="#222631"
+    stroke-width="1.5"
+    paint-order="stroke"
+    transform="rotate(90 ${x} ${y})">
+    ${percent}%
+   </text>
+  `;
+  offset+=length;
+});
   let length=h/totalHours*circumference;
   segments+=`
    <circle cx="100" cy="100" r="68"
