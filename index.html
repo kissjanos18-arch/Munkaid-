@@ -731,8 +731,8 @@ let bonusPay=c.bonus;
  let totalHours=workEntries.reduce((s,e)=>s+hours(e),0);
 
  let km=drives.filter(e=>e.date.startsWith(m))
-   .reduce((s,e)=>s+Math.max(0,Number(e.endKm)-Number(e.startKm)),0);
-
+  .reduce((s,e)=>s+Number(e.km??Math.max(0,Number(e.endKm)-Number(e.startKm))),0);
+  
  let driving=drives.filter(e=>e.date.startsWith(m))
    .reduce((s,e)=>s+duration(e.departure,e.arrival),0);
   let drivingPay=driving*rate;
@@ -940,7 +940,8 @@ function saveDrive(){
  });
 
  persist();
- renderDrives();
+renderDrives();
+renderMonthly();
 
  $("km").value="";
  $("driveNote").value="";
