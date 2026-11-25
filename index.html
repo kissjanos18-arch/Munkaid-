@@ -1289,14 +1289,77 @@ let totalWithDriving=c.total+drivingPay+kmPay;
    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
  })[ch]);
 
- let chart=totalHours>0
-   ? `<div style="width:175px;height:175px;border-radius:50%;background:conic-gradient(${gradient});margin:20px auto;display:flex;align-items:center;justify-content:center;">
-        <div style="width:105px;height:105px;border-radius:50%;background:white;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-          <strong style="font-size:27px;color:#171a25;font-weight:800;text-shadow:none;">${fmt(totalHours)}</strong>
-          <span style="font-size:13px;color:#777;">összes óra</span>
-        </div>
-      </div>`
-   : `<p>Nincs ledolgozott munkaóra ebben a hónapban.</p>`;
+ let chart="";
+if(totalHours>0){
+ let circumference=2*Math.PI*68;
+ let offset=0;
+ let segments="";
+
+ placeList.forEach(([name,h],i)=>{
+  let length=h/totalHours*circumference;
+  segments+=`
+   <circle cx="100" cy="100" r="68"
+    fill="none"
+    stroke="${colors[i%colors.length]}"
+    stroke-width="27"
+    stroke-linecap="round"
+    stroke-dasharray="${length} ${circumference-length}"
+    stroke-dashoffset="${-offset}"
+    filter="url(#sliceGlow)"/>
+  `;
+  offset+=length;
+ });
+
+ chart=`
+ <div style="width:220px;height:220px;margin:20px auto;
+ filter:drop-shadow(0 8px 18px rgba(0,0,0,.4));">
+ <svg viewBox="0 0 200 200" width="100%" height="100%">
+  <defs>
+   <filter id="sliceGlow" x="-50%" y="-50%" width="200%" height="200%">
+    <feGaussianBlur stdDeviation="4" result="blur"/>
+    <feMerge>
+     <feMergeNode in="blur"/>
+     <feMergeNode in="SourceGraphic"/>
+    </feMerge>
+   </filter>
+   <filter id="centerGlow" x="-100%" y="-100%" width="300%" height="300%">
+    <feGaussianBlur stdDeviation="7" result="blur"/>
+    <feMerge>
+     <feMergeNode in="blur"/>
+     <feMergeNode in="SourceGraphic"/>
+    </feMerge>
+   </filter>
+  </defs>
+
+  <circle cx="100" cy="100" r="68"
+   fill="none" stroke="#252a34" stroke-width="27"/>
+
+  <g transform="rotate(-90 100 100)">
+   ${segments}
+  </g>
+
+  <circle cx="100" cy="100" r="34"
+   fill="#ed1838" filter="url(#centerGlow)"/>
+
+  <circle cx="100" cy="100" r="29"
+   fill="#d90e30" stroke="#ff526f" stroke-width="1.5"/>
+
+  <text x="100" y="98" text-anchor="middle"
+   fill="#ffffff" font-size="20" font-weight="800"
+   style="filter:drop-shadow(0 0 5px white)">
+   ${fmt(totalHours)}
+  </text>
+
+  <text x="100" y="115" text-anchor="middle"
+   fill="#ffffff" font-size="8" opacity=".95">
+   összes óra
+  </text>
+ </svg>
+ </div>`;
+}else{
+ chart=`<p>Nincs ledolgozott munkaóra ebben a hónapban.</p>`;
+}
+  
  let legend=placeList.map(([name,h],i)=>
    `<div class="row entry">
      <span><span style="display:inline-block;width:11px;height:11px;border-radius:50%;background:${colors[i%colors.length]};margin-right:7px"></span>${safeName(name)}</span>
