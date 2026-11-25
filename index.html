@@ -773,6 +773,7 @@ nav button,
    transform: translateY(0);
   }
  }
+ }
 /* DARK GLASS NAVIGÁCIÓ */
 
 nav {
@@ -1040,7 +1041,13 @@ header::after {
 
 <script>
 const $=id=>document.getElementById(id);
-const today=()=>new Date().toISOString().slice(0,10);
+const today=()=>{
+ let d=new Date();
+ let y=d.getFullYear();
+ let m=String(d.getMonth()+1).padStart(2,"0");
+ let day=String(d.getDate()).padStart(2,"0");
+ return `${y}-${m}-${day}`;
+};
 let works=JSON.parse(localStorage.getItem("works")||"[]");
 let drives=JSON.parse(localStorage.getItem("drives")||"[]");
 let settings=JSON.parse(localStorage.getItem("settings")||"{}");
@@ -1278,13 +1285,21 @@ let totalWithDriving=c.total+drivingPay+kmPay;
  });
 
  let colors=["#c62828","#1976d2","#2e9d50","#f39c12","#8e44ad","#00897b"];
- let placeList=Object.entries(places);
+let originalPlaces=Object.entries(places);
+let colorOrder=new Map(originalPlaces.map(([name],i)=>[name,i]));
+let sortedPlaces=[...originalPlaces].sort((a,b)=>b[1]-a[1]);
+let placeList=[];
+
+while(sortedPlaces.length){
+ placeList.push(sortedPlaces.shift());
+ if(sortedPlaces.length) placeList.push(sortedPlaces.pop());
+}
  let current=0;
 
  let gradient=placeList.map(([name,h],i)=>{
    let start=current;
    current+=totalHours>0?h/totalHours*100:0;
-   return `${colors[i%colors.length]} ${start}% ${current}%`;
+  return `${colors[colorOrder.get(name)%colors.length]} ${start}% ${current}%`;
  }).join(",");
 
  let safeName=name=>String(name).replace(/[&<>"']/g,ch=>({
@@ -1306,7 +1321,7 @@ placeList.forEach(([name,h],i)=>{
   segments+=`
    <circle cx="100" cy="100" r="68"
     fill="none"
-    stroke="${colors[i%colors.length]}"
+   stroke="${colors[colorOrder.get(name)%colors.length]}"
     stroke-width="27"
     stroke-linecap="butt"
     stroke-dasharray="${Math.max(0,length-4)} ${circumference-length+4}"
@@ -1316,7 +1331,7 @@ placeList.forEach(([name,h],i)=>{
    <text x="${x}" y="${y+3}"
     text-anchor="middle"
     fill="#ffffff"
-    font-size="11"
+    font-size="12"
     font-weight="800"
     stroke="#222631"
     stroke-width="1.5"
@@ -1329,7 +1344,7 @@ placeList.forEach(([name,h],i)=>{
 });
 
  chart=`
-<div style="width:260px;height:260px;margin:20px auto;
+<div style="width:300px;height:300px;margin:20px auto;
  filter:drop-shadow(0 8px 18px rgba(0,0,0,.4));">
  <svg viewBox="0 0 200 200" width="100%" height="100%">
   <defs>
@@ -1380,8 +1395,8 @@ placeList.forEach(([name,h],i)=>{
   
  let legend=placeList.map(([name,h],i)=>
    `<div class="row entry">
-     <span><span style="display:inline-block;width:11px;height:11px;border-radius:50%;background:${colors[i%colors.length]};margin-right:7px"></span>${safeName(name)}</span>
-     <strong>${fmt(h)} óra</strong>
+     <span><span style="display:inline-block;width:11px;height:11px;border-radius:50%;background:${colors[colorOrder.get(name)%colors.length]};margin-right:7px"></span>${safeName(name)}</span>
+     <strong>${fmt(h)} óra · ${totalHours>0?Math.round(h/totalHours*100):0}%</strong>
    </div>`
  ).join("");
 
@@ -1528,7 +1543,7 @@ function renderYearly(){
  let vacation=es.filter(e=>e.category==="Szabadság").length,sick=es.filter(e=>e.category==="Betegszabadság").length;
  $("yearlyResults").innerHTML=[
  ["Ledolgozott órák",fmt(c.normal+c.extra)+" óra"],["Túlórák",fmt(c.extra)+" óra"],
- ["Éves nettó bér",money(c.total)],["Szabadságkeret",settings.vacation??25+" nap"],
+ ["Éves nettó bér",money(c.total)],["Szabadságkeret",String(settings.vacation??25)+" nap"],
  ["Felhasznált szabadság",vacation+" nap"],["Betegszabadság",sick+" nap"]
  ].map(x=>`<div class="row entry"><span>${x[0]}</span><strong>${x[1]}</strong></div>`).join("");
 }
@@ -1597,14 +1612,17 @@ function removeProject(i){
  renderProjects();
 }
 
-function renderProjects(){
- $("projectList").innerHTML=projects.map((p,i)=>
-  `<div class="row entry">
-   <strong>${p.name}</strong>
-   <button onclick="setProjectHours(${i})">Óra beállítása</button>
-   <button class="danger" onclick="removeProject(${i})">Törlés</button>
-  </div>`
- ).join("")||'<p class="muted">Még nincs felvett projekt.</p>';
+function setProjectHours(i){
+ let hours=Number(prompt("Új alapértelmezett munkaóra:",projects[i].hours));
+
+ if(!hours || hours<=0){
+  alert("Adj meg érvényes óraszámot!");
+  return;
+ }
+
+ projects[i].hours=hours;
+ persist();
+ renderProjects();
 }
   
 function exportHTML(){
