@@ -536,6 +536,321 @@ h3 {
   font-size: 22px;
  }
 }
+  /* DARK GLASS – FUTURISZTIKUS ALAPMEGJELENÉS */
+
+:root {
+ --bg: #090b12;
+ --surface: rgba(24, 27, 39, .82);
+ --surface2: #171a25;
+ --border: rgba(255,255,255,.09);
+ --red: #ff304f;
+ --red-glow: rgba(255,48,79,.25);
+ --text: #f4f5fa;
+ --muted: #9da3b5;
+}
+
+body {
+ background:
+  radial-gradient(ellipse at 15% 0%, rgba(150,15,45,.20), transparent 38%),
+  radial-gradient(ellipse at 90% 35%, rgba(70,35,100,.13), transparent 35%),
+  var(--bg);
+ color: var(--text);
+}
+
+header {
+ background: linear-gradient(135deg,#170b16,#35101f 55%,#8f1830);
+ border-bottom: 1px solid rgba(255,255,255,.12);
+ box-shadow: 0 12px 40px rgba(255,30,70,.12);
+}
+
+header h1 {
+ color: #fff;
+ text-shadow: 0 0 20px rgba(255,70,100,.35);
+}
+
+header p {
+ color: #e9cbd2;
+}
+
+nav {
+ background: rgba(12,14,22,.88);
+ backdrop-filter: blur(18px);
+ -webkit-backdrop-filter: blur(18px);
+ border-bottom: 1px solid var(--border);
+}
+
+nav button {
+ background: rgba(255,255,255,.045);
+ color: #aeb3c2;
+ border: 1px solid transparent;
+}
+
+nav button.active {
+ background: linear-gradient(135deg,#b31235,#ff3658);
+ color: white;
+ box-shadow: 0 0 20px var(--red-glow);
+}
+
+.panel,
+.card,
+.drive-calendar-card,
+.metric {
+ background: linear-gradient(145deg,rgba(31,35,49,.94),rgba(17,20,30,.94));
+ border: 1px solid var(--border);
+ color: var(--text);
+ box-shadow: 0 12px 35px rgba(0,0,0,.28);
+ backdrop-filter: blur(16px);
+ -webkit-backdrop-filter: blur(16px);
+}
+
+h2,h3,strong {
+ color: #f6f6fb;
+}
+
+label {
+ color: #b7bdcd;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+select,
+textarea {
+ background: rgba(8,11,19,.72);
+ color: #fff;
+ border: 1px solid rgba(255,255,255,.12);
+}
+
+input::placeholder,
+textarea::placeholder {
+ color: #737b90;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+ border-color: var(--red);
+ box-shadow: 0 0 0 3px var(--red-glow);
+ background: #111522;
+}
+
+.primary {
+ background: linear-gradient(135deg,#c20e37,#ff3658);
+ color: white;
+ box-shadow: 0 5px 22px var(--red-glow);
+}
+
+.secondary {
+ background: #252a39;
+ color: #f3f4fa;
+ border: 1px solid var(--border);
+}
+
+.danger {
+ background: rgba(255,48,79,.12);
+ color: #ff7188;
+ border: 1px solid rgba(255,48,79,.25);
+}
+
+.metric {
+ background: linear-gradient(145deg,rgba(43,30,48,.95),rgba(22,25,38,.95));
+ border-color: rgba(255,65,95,.18);
+}
+
+.metric small,
+.muted,
+.dayname {
+ color: var(--muted);
+}
+
+.metric strong {
+ color: #ff526f;
+ text-shadow: 0 0 16px var(--red-glow);
+}
+
+.entry {
+ border-color: rgba(255,255,255,.08);
+}
+
+.day {
+ background: #1c2030;
+ color: #e7e9f1;
+ border-color: rgba(255,255,255,.07);
+}
+
+.day.work {
+ background: rgba(255,48,79,.20);
+ color: #ff8095;
+ border-color: rgba(255,48,79,.3);
+}
+
+.day.vacation {
+ background: rgba(46,180,110,.17);
+ color: #75e2a3;
+ border-color: rgba(46,180,110,.25);
+}
+
+.day.sick {
+ background: rgba(255,170,55,.16);
+ color: #ffc477;
+ border-color: rgba(255,170,55,.25);
+}
+
+.day.selected {
+ outline-color: #ff3658;
+ box-shadow: 0 0 18px var(--red-glow);
+}
+
+.drive-calendar-head strong {
+ color: white;
+}
+
+.drive-calendar-nav button {
+ background: #252a39;
+ color: white;
+ border-color: var(--border);
+}
+
+.drive-day {
+ background: #202435;
+ color: #e9eaf2;
+}
+
+.drive-day.selected {
+ background: linear-gradient(135deg,#c20e37,#ff3658);
+ box-shadow: 0 0 17px var(--red-glow);
+}
+
+.drive-day.has-drive:not(.selected) {
+ background: rgba(255,48,79,.16);
+ color: #ff8196;
+}
+
+.drive-dot {
+ background: #ff526f;
+ box-shadow: 0 0 7px #ff3658;
+}
+
+.drive-selected-date {
+ color: var(--muted);
+}
+
+/* FINOM MOZGÁSOK */
+
+.panel,
+.card,
+.metric,
+.drive-calendar-card {
+ transition: transform .22s ease, box-shadow .22s ease;
+}
+
+.primary,
+.secondary,
+.danger,
+nav button,
+.drive-day {
+ transition: all .2s ease;
+}
+
+.primary:active,
+.secondary:active,
+.danger:active {
+ transform: scale(.97);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+ .panel,
+ .card,
+ .metric {
+  animation: glassAppear .4s ease both;
+ }
+
+ @keyframes glassAppear {
+  from {
+   opacity: 0;
+   transform: translateY(7px);
+  }
+  to {
+   opacity: 1;
+   transform: translateY(0);
+  }
+ }
+/* DARK GLASS NAVIGÁCIÓ */
+
+nav {
+ gap: 9px;
+ padding: 13px 14px;
+ background: rgba(9,11,18,.92);
+ border-bottom: 1px solid rgba(255,255,255,.07);
+}
+
+nav button {
+ min-height: 45px;
+ border-radius: 14px;
+ background: linear-gradient(145deg,#1b2030,#111521);
+ border: 1px solid rgba(255,255,255,.07);
+ color: #aeb5c8;
+ font-size: 12px;
+ font-weight: 700;
+ letter-spacing: .2px;
+}
+
+nav button.active {
+ background: linear-gradient(135deg,#a90e32,#ff3658);
+ color: #fff;
+ border-color: rgba(255,120,145,.45);
+ box-shadow:
+  0 0 12px rgba(255,48,79,.25),
+  inset 0 1px 0 rgba(255,255,255,.18);
+}
+
+nav button:active {
+ transform: scale(.95);
+}
+
+header {
+ position: relative;
+}
+
+header::after {
+ content: "";
+ position: absolute;
+ width: 190px;
+ height: 190px;
+ right: -65px;
+ top: -85px;
+ border-radius: 50%;
+ background: rgba(255,55,90,.13);
+ filter: blur(35px);
+ pointer-events: none;
+}
+  /* IKONOS FUTURISZTIKUS MENÜ */
+
+.glass-nav {
+ display: flex;
+ gap: 8px;
+}
+
+.glass-nav button {
+ display: flex;
+ flex-direction: column;
+ align-items: center;
+ justify-content: center;
+ gap: 5px;
+ min-width: 76px;
+ min-height: 62px;
+ padding: 8px 9px;
+ font-size: 11px;
+}
+
+.nav-icon {
+ font-size: 20px;
+ line-height: 22px;
+ color: #ff526f;
+}
+
+.glass-nav button.active .nav-icon {
+ color: white;
+ text-shadow: 0 0 12px #ff8095;
+}
 </style>
 </head>
 <body>
@@ -543,13 +858,36 @@ h3 {
 <h1 id="heading">Munkaidő-nyilvántartó</h1>
 <p id="subheading">Saját munkaidő és bérkimutatás</p>
 </header>
-<nav>
-<button class="active" data-page="calendar">Naptár</button>
-<button data-page="driving">Vezetés</button>
-<button data-page="monthly">Havi bér</button>
-<button data-page="yearly">Éves</button>
-<button data-page="settings">Beállítások</button>
-  <button data-page="projects">Projektek</button>
+<nav class="glass-nav">
+ <button class="active" data-page="calendar">
+  <span class="nav-icon">▦</span>
+  <span>Naptár</span>
+ </button>
+
+ <button data-page="driving">
+  <span class="nav-icon">🚘</span>
+  <span>Vezetés</span>
+ </button>
+
+ <button data-page="monthly">
+  <span class="nav-icon">◈</span>
+  <span>Havi bér</span>
+ </button>
+
+ <button data-page="yearly">
+  <span class="nav-icon">▥</span>
+  <span>Éves</span>
+ </button>
+
+ <button data-page="settings">
+  <span class="nav-icon">⚙</span>
+  <span>Beállítások</span>
+ </button>
+
+ <button data-page="projects">
+  <span class="nav-icon">▣</span>
+  <span>Projektek</span>
+ </button>
 </nav>
 <main>
 <section id="calendar" class="page">
