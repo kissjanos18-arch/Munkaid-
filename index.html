@@ -1325,19 +1325,6 @@ placeList.forEach(([name,h],i)=>{
   `;
   offset+=length;
 });
-  let length=h/totalHours*circumference;
-  segments+=`
-   <circle cx="100" cy="100" r="68"
-    fill="none"
-    stroke="${colors[i%colors.length]}"
-    stroke-width="27"
-    stroke-linecap="round"
-    stroke-dasharray="${length} ${circumference-length}"
-    stroke-dashoffset="${-offset}"
-    filter="url(#sliceGlow)"/>
-  `;
-  offset+=length;
- });
 
  chart=`
  <div style="width:220px;height:220px;margin:20px auto;
