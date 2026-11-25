@@ -205,14 +205,36 @@ button:active{
  padding:10px 0;
 }
 .entry{
- border-top:1px solid #f0f0f0;
- padding:15px 3px;
+ border:1px solid rgba(255,255,255,.07);
+ border-radius:12px;
+ padding:14px 12px;
+ margin:8px 0;
+ background:rgba(255,255,255,.035);
+ box-shadow:0 0 10px rgba(255,48,79,.06);
+ transition:all .25s ease;
+}
+ .entry strong{
+ color:#fff;
+ text-shadow:0 0 7px rgba(255,48,79,.65);
+ font-weight:700;
+ font-size:14px;
+ letter-spacing:.3px;
+}
+  .entry span{
+ color:#f4f5fa;
+ font-weight:500;
+}
+.entry:hover{
+ border-color:rgba(255,48,79,.45);
+ background:rgba(255,48,79,.06);
+ box-shadow:0 0 16px rgba(255,48,79,.18);
+ transform:translateY(-2px);
 }
 .entry:first-child{
- border-top:0;
+ border-top:1px solid rgba(255,255,255,.07);
 }
 .muted{
- color:#888;
+ color:#9da3b5;
  font-size:13px;
  line-height:1.6;
 }
@@ -1395,11 +1417,21 @@ placeList.forEach(([name,h],i)=>{
   
  let legend=placeList.map(([name,h],i)=>
    `<div class="row entry">
-     <span><span style="display:inline-block;width:11px;height:11px;border-radius:50%;background:${colors[colorOrder.get(name)%colors.length]};margin-right:7px"></span>${safeName(name)}</span>
+     <span>
+       <span style="
+         display:inline-block;
+         width:12px;
+         height:12px;
+         border-radius:50%;
+         background:${colors[colorOrder.get(name)%colors.length]};
+         box-shadow:0 0 6px ${colors[colorOrder.get(name)%colors.length]}, 0 0 12px ${colors[colorOrder.get(name)%colors.length]};
+         margin-right:9px;
+       "></span>
+       ${safeName(name)}
+     </span>
      <strong>${fmt(h)} óra · ${totalHours>0?Math.round(h/totalHours*100):0}%</strong>
    </div>`
- ).join("");
-
+).join("");
  $("monthlyResults").innerHTML=
  `<h3>Havi munkaidő</h3>
 <div class="row entry"><span>Összes ledolgozott idő</span><strong>${fmt(totalHours)} óra</strong></div>
