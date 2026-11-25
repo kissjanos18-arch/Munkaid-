@@ -263,6 +263,7 @@ button:active{
 <button data-page="monthly">Havi bér</button>
 <button data-page="yearly">Éves</button>
 <button data-page="settings">Beállítások</button>
+  <button data-page="projects">Projektek</button>
 </nav>
 <main>
 <section id="calendar" class="page">
@@ -288,7 +289,10 @@ button:active{
 <label>Befejezés</label><input type="time" id="end" value="16:00">
 <label>Szünet (perc)</label><input type="number" id="breakMinutes" min="0" value="0">
 <label>Tervezett órák</label><input type="number" id="planned" min="0" max="24" step="0.5" value="8">
-<label>Munkavégzés helye</label><input id="workplace" value="Műhely">
+<label>Projekt / munkavégzés helye</label>
+<select id="workplace">
+<option value="">Válassz projektet</option>
+</select>
 <label>Napi bónusz (%)</label><input type="number" id="bonus" min="0" value="0">
 <p class="muted" id="workedPreview">Ledolgozott idő: 8,00 óra</p>
 </div>
@@ -364,6 +368,18 @@ button:active{
 </div>
 <button class="primary" onclick="saveSettings()">Beállítások mentése</button>
 </section>
+  <section id="projects" class="page hidden">
+<h2>Projektek</h2>
+<div class="panel">
+<label>Új projekt neve</label>
+<input id="newProject" placeholder="Projekt neve">
+<button class="primary" onclick="addProject()">Projekt hozzáadása</button>
+</div>
+<div class="panel">
+<h3>Felvett projektek</h3>
+<div id="projectList"></div>
+</div>
+</section>
 </main>
 
 <script>
@@ -372,9 +388,13 @@ const today=()=>new Date().toISOString().slice(0,10);
 let works=JSON.parse(localStorage.getItem("works")||"[]");
 let drives=JSON.parse(localStorage.getItem("drives")||"[]");
 let settings=JSON.parse(localStorage.getItem("settings")||"{}");
+  let projects=JSON.parse(localStorage.getItem("projects")||"[]");
 let selectedDate=today(), editDate=null;
-function persist(){localStorage.setItem("works",JSON.stringify(works));localStorage.setItem("drives",JSON.stringify(drives))}
-function fmt(n){return Number(n||0).toLocaleString("hu-HU",{minimumFractionDigits:2,maximumFractionDigits:2})}
+function persist(){
+ localStorage.setItem("works",JSON.stringify(works));
+ localStorage.setItem("drives",JSON.stringify(drives));
+ localStorage.setItem("projects",JSON.stringify(projects));
+}function fmt(n){return Number(n||0).toLocaleString("hu-HU",{minimumFractionDigits:2,maximumFractionDigits:2})}
 function money(n){return Math.round(n||0).toLocaleString("hu-HU")+" Ft"}
 function hours(e){
  if(!e || e.category!=="Munka")return 0;
@@ -399,8 +419,10 @@ function currentMonth(){return selectedDate.slice(0,7)}
 function showPage(p){
  document.querySelectorAll(".page").forEach(x=>x.classList.add("hidden"));
  $(p).classList.remove("hidden");
+  if(p==="calendar")renderProjectOptions();
  document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===p));
  if(p==="monthly")renderMonthly();if(p==="yearly")renderYearly();if(p==="driving")renderDrives();
+  if(p==="projects")renderProjects();
 }
 document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>showPage(b.dataset.page));
  showPage("calendar");
@@ -441,10 +463,26 @@ function selectDay(date){selectedDate=date;let e=works.find(x=>x.date===date);lo
 function newWork(){editDate=null;loadWork(null)}
 function loadWork(e){
  let date=e?.date||selectedDate;
- $("workDate").value=date;$("category").value=e?.category||"Munka";
- $("start").value=e?.start||"08:00";$("end").value=e?.end||"16:00";
- $("breakMinutes").value=e?.breakMinutes??0;$("planned").value=e?.planned??8;
- $("workplace").value=e?.workplace||"Műhely";$("bonus").value=e?.bonus??0;
+ $("workDate").value=date;
+ $("category").value=e?.category||"Munka";
+ $("start").value=e?.start||"08:00";
+ $("end").value=e?.end||"16:00";
+ $("breakMinutes").value=e?.breakMinutes??0;
+ $("planned").value=e?.planned??8;
+
+ let oldPlace=e?.workplace||"";
+ renderProjectOptions(oldPlace);
+ $("workplace").value=oldPlace;
+
+ $("bonus").value=e?.bonus??0;
+ $("leaveHours").value=e?.leaveHours??8;
+
+ editDate=e?date:null;
+ $("deleteWorkButton").classList.toggle("hidden",!e);
+ toggleWorkFields();
+ preview();
+}
+$("workplace").value=oldPlace;$("bonus").value=e?.bonus??0;
  $("leaveHours").value=e?.leaveHours??8;
  editDate=e?date:null;$("deleteWorkButton").classList.toggle("hidden",!e);
  toggleWorkFields();preview();
@@ -460,8 +498,8 @@ function preview(){
 ["start","end","breakMinutes"].forEach(id=>$(id).addEventListener("input",preview));
 function saveWork(){
  let date=$("workDate").value;if(!date)return alert("Válassz dátumot!");
- let e={date,category:$("category").value,start:$("start").value,end:$("end").value,breakMinutes:Number($("breakMinutes").value)||0,planned:Number($("planned").value)||0,workplace:$("workplace").value||"Műhely",bonus:Number($("bonus").value)||0,leaveHours:Number($("leaveHours").value)||0};
- works=works.filter(x=>x.date!==date);works.push(e);selectedDate=date;persist();renderAll();alert("Napi bejegyzés elmentve.");
+ let e={date,category:$("category").value,start:$("start").value,end:$("end").value,breakMinutes:Number($("breakMinutes").value)||0,planned:Number($("planned").value)||0,workplace:$("workplace").value||"Nincs megadva",bonus:Number($("bonus").value)||0,leaveHours:Number($("leaveHours").value)||0};
+  works=works.filter(x=>x.date!==date);works.push(e);selectedDate=date;persist();renderAll();alert("Napi bejegyzés elmentve.");
 }
 function deleteWork(){if(!editDate)return;works=works.filter(x=>x.date!==editDate);persist();newWork();renderAll()}
 function renderWeek(){
@@ -626,8 +664,7 @@ let totalWithDriving=c.total+drivingPay+kmPay;
  <div class="row entry"><span>Bónusz</span><strong>${money(bonusPay)}</strong></div>
  <div class="row entry"><span>Vezetési idő díja</span><strong>${money(drivingPay)}</strong></div>
 <div class="row entry"><span>Kilométerpénz (7 Ft/km)</span><strong>${money(kmPay)}</strong></div>
- <div class="row entry"><strong>Összes nettó bér</strong><strong>${money(totalWithDriving)}</strong></div>
- <h3>Munkaórák munkahelyenként</h3>
+ <div class="row entry"><strong>Összes nettó bér</strong><strong>${money(c.total)}</strong></div> <h3>Munkaórák projektenként</h3>
  ${chart}
  ${legend}
 
@@ -690,6 +727,64 @@ function renderYearly(){
  ["Éves nettó bér",money(c.total)],["Szabadságkeret",settings.vacation??25+" nap"],
  ["Felhasznált szabadság",vacation+" nap"],["Betegszabadság",sick+" nap"]
  ].map(x=>`<div class="row entry"><span>${x[0]}</span><strong>${x[1]}</strong></div>`).join("");
+}
+  function addProject(){
+    unction renderProjectOptions(selectedValue=""){
+ let select=$("workplace");
+ if(!select)return;
+
+ let current=selectedValue || select.value;
+ select.innerHTML='<option value="">Válassz projektet</option>';
+
+ projects.forEach(p=>{
+  let option=document.createElement("option");
+  option.value=p;
+  option.textContent=p;
+  select.appendChild(option);
+ });
+
+ if(current && !projects.includes(current)){
+  let option=document.createElement("option");
+  option.value=current;
+  option.textContent=current+" (korábbi)";
+  select.appendChild(option);
+ }
+
+ select.value=current;
+}
+}
+    function addProject(){
+ let name=$("newProject").value.trim();
+
+ if(!name){
+  alert("Írd be a projekt nevét!");
+  return;
+ }
+
+ if(projects.some(p=>p.toLowerCase()===name.toLowerCase())){
+  alert("Ez a projekt már létezik!");
+  return;
+ }
+
+ projects.push(name);
+ persist();
+ $("newProject").value="";
+ renderProjects();
+}
+
+function removeProject(i){
+ projects.splice(i,1);
+ persist();
+ renderProjects();
+}
+
+function renderProjects(){
+ $("projectList").innerHTML=projects.map((p,i)=>
+  `<div class="row entry">
+   <strong>${p}</strong>
+   <button class="danger" onclick="removeProject(${i})">Törlés</button>
+  </div>`
+ ).join("")||'<p class="muted">Még nincs felvett projekt.</p>';
 }
 function exportHTML(){
  let m=$("reportMonth").value||currentMonth(),es=monthEntries(m).slice().sort((a,b)=>a.date.localeCompare(b.date));
