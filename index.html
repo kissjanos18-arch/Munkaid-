@@ -826,7 +826,9 @@ let totalWithDriving=c.total+drivingPay+kmPay;
  <div class="row entry"><span>Bónusz</span><strong>${money(bonusPay)}</strong></div>
  <div class="row entry"><span>Vezetési idő díja</span><strong>${money(drivingPay)}</strong></div>
 <div class="row entry"><span>Kilométerpénz (7 Ft/km)</span><strong>${money(kmPay)}</strong></div>
- <div class="row entry"><strong>Összes nettó bér</strong><strong>${money(c.total)}</strong></div> <h3>Munkaórák projektenként</h3>
+<div class="row entry"><strong>Nettó munkabér</strong><strong>${money(c.total)}</strong></div>
+<div class="row entry"><strong>Összesen kifizetendő (vezetéssel és kilométerpénzzel)</strong><strong>${money(totalWithDriving)}</strong></div>
+<h3>Munkaórák projektenként</h3>
  ${chart}
  ${legend}
 
