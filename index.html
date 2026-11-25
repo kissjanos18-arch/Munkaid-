@@ -250,6 +250,139 @@ button:active{
   padding:24px;
  }
 }
+  .drive-calendar-card {
+ background: #ffffff;
+ border: 1px solid #eeeeee;
+ border-radius: 20px;
+ padding: 18px;
+ margin-bottom: 16px;
+ box-shadow: 0 5px 18px rgba(0,0,0,0.045);
+}
+
+.drive-calendar-head {
+ display: flex;
+ align-items: center;
+ justify-content: space-between;
+ margin-bottom: 20px;
+}
+
+.drive-calendar-head strong {
+ font-size: 19px;
+ color: #252525;
+ text-transform: capitalize;
+}
+
+.drive-calendar-nav {
+ display: flex;
+ gap: 8px;
+}
+
+.drive-calendar-nav button {
+ width: 36px;
+ height: 36px;
+ border: 1px solid #eeeeee;
+ border-radius: 11px;
+ background: #f8f8f8;
+ color: #333;
+ font-size: 23px;
+ cursor: pointer;
+}
+
+.drive-weekdays,
+.drive-calendar-grid {
+ display: grid;
+ grid-template-columns: repeat(7, minmax(0, 1fr));
+ gap: 6px;
+}
+
+.drive-weekdays span {
+ text-align: center;
+ color: #999;
+ font-size: 11px;
+ padding-bottom: 9px;
+}
+
+.drive-day {
+ position: relative;
+ min-height: 43px;
+ border: 0;
+ border-radius: 12px;
+ background: #f6f6f6;
+ color: #333;
+ font-size: 14px;
+ font-weight: 600;
+ cursor: pointer;
+}
+
+.drive-day.selected {
+ background: #d94343;
+ color: white;
+ box-shadow: 0 4px 10px rgba(217,67,67,0.22);
+}
+
+.drive-day.has-drive:not(.selected) {
+ background: #fff0ed;
+ color: #c73535;
+}
+
+.drive-dot {
+ position: absolute;
+ width: 5px;
+ height: 5px;
+ border-radius: 50%;
+ background: #d94343;
+ bottom: 4px;
+ left: calc(50% - 2.5px);
+}
+
+.drive-selected-date {
+ color: #777;
+ font-size: 13px;
+ margin: 15px 0 0;
+}
+
+.drive-entry-panel {
+ border-radius: 20px;
+}
+
+.drive-entry-panel h3 {
+ margin-top: 0;
+ margin-bottom: 18px;
+}
+
+.drive-entry-panel input {
+ width: 100%;
+ box-sizing: border-box;
+ margin-bottom: 14px;
+}
+
+.drive-time-fields {
+ display: grid;
+ grid-template-columns: 1fr 1fr;
+ gap: 12px;
+}
+
+.drive-time-fields label {
+ display: block;
+}
+
+.drive-entry-panel .primary {
+ width: 100%;
+ margin-top: 8px;
+}
+
+@media(max-width:480px) {
+ .drive-calendar-card {
+  padding: 14px;
+ }
+ .drive-calendar-grid {
+  gap: 4px;
+ }
+ .drive-day {
+  min-height: 39px;
+  font-size: 13px;
+ }
+}
 </style>
 </head>
 <body>
@@ -315,18 +448,50 @@ button:active{
 
 <section id="driving" class="page hidden">
 <h2>Vezetési napló</h2>
-<div class="panel">
-<label>Dátum</label><input type="date" id="driveDate">
-<label>Kezdő kilométeróra</label><input type="number" id="startKm" min="0" step="0.1">
-<label>Záró kilométeróra</label><input type="number" id="endKm" min="0" step="0.1">
-<label>Indulás</label><input type="time" id="departure" value="08:00">
-<label>Érkezés</label><input type="time" id="arrival" value="16:00">
-<label>Megjegyzés / útvonal</label><input id="driveNote">
-<button class="primary" onclick="saveDrive()">Vezetési bejegyzés mentése</button>
+
+<div class="drive-calendar-card">
+ <div class="drive-calendar-head">
+  <strong id="driveMonthTitle">Vezetési napok</strong>
+  <div class="drive-calendar-nav">
+   <button type="button" onclick="changeDriveMonth(-1)">‹</button>
+   <button type="button" onclick="changeDriveMonth(1)">›</button>
+  </div>
+ </div>
+ <div class="drive-weekdays">
+  <span>H</span><span>K</span><span>Sze</span>
+  <span>Cs</span><span>P</span><span>Szo</span><span>V</span>
+ </div>
+ <div id="driveCalendarGrid" class="drive-calendar-grid"></div>
+ <input type="hidden" id="driveDate">
+ <p id="driveSelectedDate" class="drive-selected-date"></p>
 </div>
+
+<div class="panel drive-entry-panel">
+ <h3>Új vezetési bejegyzés</h3>
+
+ <label>Megtett kilométer</label>
+ <input type="number" id="km" min="0" step="0.1" placeholder="Pl. 125">
+
+ <label>Hová mentél? / Útvonal</label>
+ <input id="driveNote" placeholder="Pl. Budapest – Győr">
+
+ <div class="drive-time-fields">
+  <div>
+   <label>Indulás</label>
+   <input type="time" id="departure" value="08:00">
+  </div>
+  <div>
+   <label>Érkezés</label>
+   <input type="time" id="arrival" value="16:00">
+  </div>
+ </div>
+
+ <button class="primary" onclick="saveDrive()">Vezetési bejegyzés mentése</button>
+</div>
+
 <div class="panel">
-<h3>Korábbi vezetési napok</h3>
-<div id="driveList"></div>
+ <h3>Korábbi vezetési napok</h3>
+ <div id="driveList"></div>
 </div>
 </section>
 
@@ -390,6 +555,8 @@ let drives=JSON.parse(localStorage.getItem("drives")||"[]");
 let settings=JSON.parse(localStorage.getItem("settings")||"{}");
   let projects=JSON.parse(localStorage.getItem("projects")||"[]");
 let selectedDate=today(), editDate=null;
+  let selectedDriveDate = today();
+let driveCalendarMonth = new Date();
 function persist(){
  localStorage.setItem("works",JSON.stringify(works));
  localStorage.setItem("drives",JSON.stringify(drives));
@@ -675,40 +842,107 @@ let totalWithDriving=c.total+drivingPay+kmPay;
  <div class="row entry"><span>Vezetett kilométer</span><strong>${fmt(km)} km</strong></div>
  <div class="row entry"><span>Vezetési idő</span><strong>${fmt(driving)} óra</strong></div>`;
 }
-function renderDrives(){
- $("driveList").innerHTML=drives.slice().sort((a,b)=>b.date.localeCompare(a.date)).map((e,i)=>`<div class="entry"><strong>${e.date}</strong><p>${fmt(e.endKm-e.startKm)} km · ${fmt(duration(e.departure,e.arrival))} óra</p><p class="muted">${e.note||""}</p><button class="danger" onclick="removeDrive(${drives.indexOf(e)})">Törlés</button></div>`).join("")||'<p class="muted">Még nincs vezetési bejegyzés.</p>';
-}
-function removeDrive(i){drives.splice(i,1);persist();renderDrives()}
-  function saveDrive(){
- let startKm=Number($("startKm").value);
- let endKm=Number($("endKm").value);
- let departure=$("departure").value;
- let arrival=$("arrival").value;
+  function renderDriveCalendar(){
+ let y=driveCalendarMonth.getFullYear();
+ let m=driveCalendarMonth.getMonth();
 
- if(!departure || !arrival || $("startKm").value==="" || $("endKm").value===""){
-  alert("Kérlek, tölts ki minden kötelező mezőt!");
-  return;
+ $("driveMonthTitle").textContent=
+  driveCalendarMonth.toLocaleDateString("hu-HU",{
+   year:"numeric",
+   month:"long"
+  });
+
+ let first=new Date(y,m,1);
+ let offset=(first.getDay()+6)%7;
+ let days=new Date(y,m+1,0).getDate();
+
+ let html="";
+
+ for(let i=0;i<offset;i++){
+  html+="<div></div>";
  }
 
- if(endKm<startKm){
-  alert("A záró kilométeróra nem lehet kisebb a kezdőnél!");
+ for(let day=1;day<=days;day++){
+  let date=y+"-"+String(m+1).padStart(2,"0")+"-"+String(day).padStart(2,"0");
+  let hasDrive=drives.some(e=>e.date===date);
+
+  html+=`
+   <button type="button"
+    class="drive-day ${date===selectedDriveDate?"selected":""} ${hasDrive?"has-drive":""}"
+    onclick="selectDriveDate('${date}')">
+    ${day}
+    ${hasDrive?'<span class="drive-dot"></span>':""}
+   </button>`;
+ }
+
+ $("driveCalendarGrid").innerHTML=html;
+ $("driveDate").value=selectedDriveDate;
+
+ $("driveSelectedDate").textContent=
+  "Kiválasztott nap: "+
+  new Date(selectedDriveDate+"T12:00:00").toLocaleDateString("hu-HU",{
+   year:"numeric",
+   month:"long",
+   day:"numeric"
+  });
+}
+
+function changeDriveMonth(amount){
+ driveCalendarMonth=new Date(
+  driveCalendarMonth.getFullYear(),
+  driveCalendarMonth.getMonth()+amount,
+  1
+ );
+ renderDriveCalendar();
+}
+
+function selectDriveDate(date){
+ selectedDriveDate=date;
+ renderDriveCalendar();
+}
+function renderDrives(){
+ $("driveList").innerHTML=drives.slice()
+ .sort((a,b)=>b.date.localeCompare(a.date))
+ .map(e=>{
+  let km=e.km!==undefined
+   ? Number(e.km)
+   : Math.max(0,Number(e.endKm)-Number(e.startKm));
+
+  return `<div class="entry">
+   <strong>${e.date}</strong>
+   <p>${fmt(km)} km · ${fmt(duration(e.departure,e.arrival))} óra</p>
+   <p class="muted">${e.note||""}</p>
+   <button class="danger" onclick="removeDrive(${drives.indexOf(e)})">Törlés</button>
+  </div>`;
+ }).join("")||'<p class="muted">Még nincs vezetési bejegyzés.</p>';
+
+ if($("driveCalendarGrid"))renderDriveCalendar();
+}
+function removeDrive(i){drives.splice(i,1);persist();renderDrives()}
+  
+function saveDrive(){
+ let km=Number($("km").value);
+ let departure=$("departure").value;
+ let arrival=$("arrival").value;
+ let note=$("driveNote").value.trim();
+
+ if($("km").value==="" || km<0 || !departure || !arrival){
+  alert("Kérlek, töltsd ki a kilométert, az indulást és az érkezést!");
   return;
  }
 
  drives.push({
-  date:selectedDate,
-  startKm,
-  endKm,
-  departure,
-  arrival,
-  note:$("driveNote").value
+  date:selectedDriveDate,
+  km:km,
+  departure:departure,
+  arrival:arrival,
+  note:note
  });
 
  persist();
  renderDrives();
 
- $("startKm").value="";
- $("endKm").value="";
+ $("km").value="";
  $("driveNote").value="";
 
  alert("A vezetési bejegyzés elmentve!");
