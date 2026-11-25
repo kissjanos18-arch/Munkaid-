@@ -1308,8 +1308,8 @@ placeList.forEach(([name,h],i)=>{
     fill="none"
     stroke="${colors[i%colors.length]}"
     stroke-width="27"
-    stroke-linecap="round"
-    stroke-dasharray="${length} ${circumference-length}"
+    stroke-linecap="butt"
+    stroke-dasharray="${Math.max(0,length-4)} ${circumference-length+4}"
     stroke-dashoffset="${-offset}"
     filter="url(#sliceGlow)"/>
 
