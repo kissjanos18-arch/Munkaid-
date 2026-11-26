@@ -2207,9 +2207,13 @@ placeList.forEach(([name,h],i)=>{
  let m=String(driveCalendarMonth.getMonth()+1).padStart(2,"0");
  let selectedMonth=y+"-"+m;
 
- if(!selectedDriveDate || !selectedDriveDate.startsWith(selectedMonth)){
-  selectedDriveDate=selectedMonth+"-01";
- }
+if(!selectedDriveDate || !selectedDriveDate.startsWith(selectedMonth)){
+  let day=Math.min(
+   Number(selectedDriveDate?.slice(8,10))||new Date().getDate(),
+   new Date(y,Number(m),0).getDate()
+  );
+  selectedDriveDate=selectedMonth+"-"+String(day).padStart(2,"0");
+}
 
  renderDriveCalendar();
  renderDrives();
@@ -2271,6 +2275,7 @@ function changeDriveMonth(amount){
 function selectDriveDate(date){
  selectedDriveDate=date;
  renderDriveCalendar();
+ renderDrives();
 }
 function renderDrives(){
  let selectedMonth=
@@ -2690,7 +2695,7 @@ function exportPayHTML(){
   function renderAll(){renderCalendar();renderMonthly();renderYearly();renderDrives()}
 $("reportMonth").value=currentMonth();$("reportYear").value=new Date().getFullYear();
   driveCalendarMonth=new Date(currentMonth()+"-01T12:00:00");
-selectedDriveDate=currentMonth()+"-01";
+selectedDriveDate=today();
 $("driveDate").value=today();loadSettings();loadWork(null);renderAll();
 </script>
 </body>
