@@ -1475,8 +1475,17 @@ if(e){
  }
  $("calendarGrid").innerHTML=html;
  let month=monthEntries(selectedDate.slice(0,7)),normal=month.reduce((s,e)=>s+Math.max(0,hours(e)-overtime(e)),0),extra=month.reduce((s,e)=>s+overtime(e),0),pay=calculate(month).total;
-$("topMetrics").innerHTML=metricHTML("Ledolgozott idő",fmt(normal+extra)+" óra")+metricHTML("Túlóra",fmt(extra)+" óra");
- renderWeek();
+let workDays=month.filter(e=>e.category==="Munka").length;
+let vacationDays=month.filter(e=>e.category==="Szabadság").length;
+let sickDays=month.filter(e=>e.category==="Betegszabadság").length;
+
+$("topMetrics").innerHTML=
+ metricHTML("Ledolgozott idő",fmt(normal+extra)+" óra")+
+ metricHTML("Túlóra",fmt(extra)+" óra")+
+ metricHTML("Ledolgozott napok",workDays+" nap")+
+ metricHTML("Szabadság",vacationDays+" nap")+
+ metricHTML("Betegszabadság",sickDays+" nap");
+  renderWeek();
 }
 function metricHTML(t,v){return `<div class="metric"><small>${t}</small><strong>${v}</strong></div>`}
 function selectDay(date){selectedDate=date;let e=works.find(x=>x.date===date);loadWork(e);renderCalendar()}
