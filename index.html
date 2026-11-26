@@ -914,8 +914,48 @@ header::after {
   /* IKONOS FUTURISZTIKUS MENÜ */
 
 .glass-nav {
- display: flex;
- gap: 8px;
+ display:flex;
+ gap:8px;
+ padding:9px;
+ border-radius:20px;
+ background:rgba(255,255,255,.72);
+ border:1px solid rgba(255,255,255,.8);
+ box-shadow:0 8px 24px rgba(20,30,50,.10);
+ backdrop-filter:blur(16px);
+ -webkit-backdrop-filter:blur(16px);
+}
+
+.glass-nav button{
+ flex:1;
+ min-height:62px;
+ border-radius:15px;
+ border:1px solid transparent;
+ background:transparent;
+ color:#626b7c;
+ display:flex;
+ flex-direction:column;
+ align-items:center;
+ justify-content:center;
+ gap:5px;
+ font-size:12px;
+ font-weight:700;
+ box-shadow:none;
+}
+
+.glass-nav button.active{
+ background:linear-gradient(135deg,#e53950,#b91f3b);
+ color:#fff;
+ border-color:rgba(255,255,255,.35);
+ box-shadow:0 5px 16px rgba(198,40,60,.28);
+}
+
+.glass-nav .nav-icon{
+ font-size:21px;
+ line-height:1;
+}
+
+.glass-nav button:active{
+ transform:scale(.95);
 }
 
 .glass-nav button {
