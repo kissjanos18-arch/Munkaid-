@@ -1330,7 +1330,13 @@ button.secondary{
 <section id="monthly" class="page hidden">
 <h2>Havi bérkimutatás</h2>
 <div class="panel">
-<label>Hónap</label><input type="month" id="reportMonth" onchange="renderMonthly()">
+<label>Elszámolási hónap</label>
+<div class="month-navigation">
+ <button type="button" onclick="changeReportMonth(-1)">❮</button>
+ <strong id="reportMonthLabel"></strong>
+ <button type="button" onclick="changeReportMonth(1)">❯</button>
+</div>
+<input type="month" id="reportMonth" style="display:none">
 <div id="monthlyResults"></div>
 </div>
 <div class="panel">
@@ -1887,10 +1893,18 @@ function calculate(es){
 
  return Math.max(0,(end-start)/60);
 }
+  function changeReportMonth(direction){
+ let input=$("reportMonth");
+ let date=new Date(input.value+"-01T12:00:00");
+ date.setMonth(date.getMonth()+direction);
+ input.value=date.getFullYear()+"-"+String(date.getMonth()+1).padStart(2,"0");
+ renderMonthly();
+ renderDrives();
+}
 function renderMonthly(){
  let m=$("reportMonth").value||currentMonth();
  $("reportMonth").value=m;
-
+$("reportMonthLabel").textContent=new Date(m+"-01T12:00:00").toLocaleDateString("hu-HU",{year:"numeric",month:"long"});
  let es=monthEntries(m);
  let c=calculate(es);
   let rate=Number(settings.rate??3000);
@@ -2133,6 +2147,13 @@ placeList.forEach(([name,h],i)=>{
  <div class="row entry"><span>Vezetési idő</span><strong>${fmt(driving)} óra</strong></div>`;
 }
   function renderDriveCalendar(){
+ let selectedMonth=$("reportMonth").value||currentMonth();
+ driveCalendarMonth=new Date(selectedMonth+"-01T12:00:00");
+
+ if(!selectedDriveDate || !selectedDriveDate.startsWith(selectedMonth)){
+  selectedDriveDate=selectedMonth+"-01";
+ }
+
  let y=driveCalendarMonth.getFullYear();
  let m=driveCalendarMonth.getMonth();
 
@@ -2191,7 +2212,8 @@ function selectDriveDate(date){
  renderDriveCalendar();
 }
 function renderDrives(){
- $("driveList").innerHTML=drives.slice()
+let selectedMonth=$("reportMonth").value||currentMonth();
+$("driveList").innerHTML=drives.filter(e=>e.date.startsWith(selectedMonth)).slice()
  .sort((a,b)=>b.date.localeCompare(a.date))
  .map(e=>{
   let km=e.km!==undefined
@@ -2364,7 +2386,11 @@ function handleWorkplaceChange(){
   toggleWorkFields();
   return;
  }
-
+if(select.value==="Műhely"){
+ $("start").value="07:30";
+ $("end").value="16:00";
+ $("breakMinutes").value=30;
+}
  setPlannedFromProject();
  toggleWorkFields();
 }
@@ -2597,6 +2623,8 @@ function exportPayHTML(){
 }
   function renderAll(){renderCalendar();renderMonthly();renderYearly();renderDrives()}
 $("reportMonth").value=currentMonth();$("reportYear").value=new Date().getFullYear();
+  driveCalendarMonth=new Date(currentMonth()+"-01T12:00:00");
+selectedDriveDate=currentMonth()+"-01";
 $("driveDate").value=today();loadSettings();loadWork(null);renderAll();
 </script>
 </body>
