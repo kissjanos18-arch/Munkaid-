@@ -2288,7 +2288,7 @@ function changeDriveMonth(amount){
  let m=String(driveCalendarMonth.getMonth()+1).padStart(2,"0");
  let selectedMonth=y+"-"+m;
 
- if(selectedMonth===currentMonth()){
+ if(selectedMonth===today().slice(0,7)){
   selectedDriveDate=today();
  }else{
   selectedDriveDate=selectedMonth+"-01";
@@ -2401,7 +2401,7 @@ let payChart=`
   </div>
   <div style="text-align:center;font-size:12px;color:#888;">Nettó bér hónaponként</div>
  </div>`;
-  ("yearlyResults").innerHTML=summary+chart+payChart;
+  $("yearlyResults").innerHTML=summary+chart+payChart;
 }
 function renderProjectOptions(selectedValue=""){
  let select=$("workplace");
