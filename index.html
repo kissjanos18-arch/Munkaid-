@@ -1024,14 +1024,32 @@ header::after {
 <div id="workFields">
 <label>Kezdés</label>
 <input type="time" id="start" value="08:00">
-<button type="button" style="background:#2e9d50;color:white;border:0" onclick="startWorkNow()">▶ Munka kezdése</button>
+<button type="button"
+ style="background:linear-gradient(135deg,#35c96b,#16883e);
+ color:white;border:0;border-radius:14px;
+ padding:16px 22px;font-size:17px;font-weight:bold;
+ width:100%;min-height:58px;
+ box-shadow:0 4px 14px rgba(46,200,100,.35);
+ margin:8px 0 16px"
+ onclick="startWorkNow()">
+ ▶ MUNKA KEZDÉSE
+</button>
 
 
 <label>Befejezés</label>
 <input type="time" id="end" value="16:00">
-  
-<button type="button" style="background:#c62828;color:white;border:0" onclick="endWorkNow()">■ Munka befejezése</button>
-  <label>Szünet (perc)</label><input type="number" id="breakMinutes" min="0" value="0">
+
+  <button type="button"
+ style="background:linear-gradient(135deg,#ff5252,#c62828);
+ color:white;border:0;border-radius:14px;
+ padding:16px 22px;font-size:17px;font-weight:bold;
+ width:100%;min-height:58px;
+ box-shadow:0 4px 14px rgba(220,40,40,.35);
+ margin:8px 0 16px"
+ onclick="endWorkNow()">
+ ■ MUNKA BEFEJEZÉSE
+</button>
+ <label>Szünet (perc)</label><input type="number" id="breakMinutes" min="0" value="0">
 <label>Tervezett órák</label><input type="number" id="planned" min="0" max="24" step="0.5" value="8">
 <label>Projekt / munkavégzés helye</label>
 <select id="workplace" onchange="handleWorkplaceChange()">
