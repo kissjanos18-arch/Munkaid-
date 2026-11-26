@@ -2183,10 +2183,23 @@ placeList.forEach(([name,h],i)=>{
 <div class="row entry"><span>Munkába járások száma</span><strong>${commuteTrips} út</strong></div>
  <div class="row entry"><span>Vezetési idő</span><strong>${fmt(driving)} óra</strong></div>`;
 }
-  function renderDriveCalendar(){
-let y=driveCalendarMonth.getFullYear();
-let m=driveCalendarMonth.getMonth();
+  function changeDriveMonth(direction){
+ driveCalendarMonth.setMonth(
+  driveCalendarMonth.getMonth()+direction
+ );
 
+ let y=driveCalendarMonth.getFullYear();
+ let m=String(driveCalendarMonth.getMonth()+1).padStart(2,"0");
+ let selectedMonth=y+"-"+m;
+
+ if(!selectedDriveDate || !selectedDriveDate.startsWith(selectedMonth)){
+  selectedDriveDate=selectedMonth+"-01";
+ }
+
+ renderDriveCalendar();
+ renderDrives();
+}
+  function renderDriveCalendar(){
  let y=driveCalendarMonth.getFullYear();
  let m=driveCalendarMonth.getMonth();
 
