@@ -1661,7 +1661,16 @@ function renderProjectOptions(selectedValue=""){
   option.textContent=current;
   select.appendChild(option);
  }
-  function handleWorkplaceChange(){
+
+ let other=document.createElement("option");
+ other.value="__other__";
+ other.textContent="+ Egyéb helyszín megadása";
+ select.appendChild(other);
+
+ select.value=current;
+}
+
+function handleWorkplaceChange(){
  let select=$("workplace");
  if(!select)return;
 
