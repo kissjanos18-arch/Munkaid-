@@ -964,12 +964,23 @@ header::after {
  background:#252a39;
  color:#aeb5c8;
 }
+  #saveStatus{
+ display:inline-block;
+ margin-top:6px;
+ padding:6px 12px;
+ border-radius:20px;
+ background:rgba(46,157,80,.15);
+ color:#55d982;
+ font-size:13px;
+ font-weight:600;
+}
 </style>
 </head>
 <body>
 <header>
 <h1 id="heading">Munkaidő-nyilvántartó</h1>
 <p id="subheading">Saját munkaidő és bérkimutatás</p>
+  <div id="saveStatus">● Adatok mentve</div>
 </header>
 <nav class="glass-nav">
  <button class="active" data-page="calendar">
@@ -1216,7 +1227,14 @@ function persist(){
  localStorage.setItem("works",JSON.stringify(works));
  localStorage.setItem("drives",JSON.stringify(drives));
  localStorage.setItem("projects",JSON.stringify(projects));
-}function fmt(n){return Number(n||0).toLocaleString("hu-HU",{minimumFractionDigits:2,maximumFractionDigits:2})}
+
+ let status=$("saveStatus");
+ if(status){
+  status.textContent="● Adatok mentve";
+  status.style.color="#55d982";
+ }
+}
+  function fmt(n){return Number(n||0).toLocaleString("hu-HU",{minimumFractionDigits:2,maximumFractionDigits:2})}
 function money(n){return Math.round(n||0).toLocaleString("hu-HU")+" Ft"}
 function hours(e){
  if(!e || e.category!=="Munka")return 0;
