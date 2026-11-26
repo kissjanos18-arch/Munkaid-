@@ -1526,14 +1526,21 @@ function currentMonth(){return selectedDate.slice(0,7)}
 function showPage(p){
  document.querySelectorAll(".page").forEach(x=>x.classList.add("hidden"));
  $(p).classList.remove("hidden");
-  if(p==="calendar")renderProjectOptions();
-  if(p==="projects")renderProjects();
- document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===p));
- if(p==="monthly")renderMonthly();if(p==="yearly")renderYearly();if(p==="driving")renderDrives();
 
+ if(p==="calendar")renderProjectOptions();
+ if(p==="projects")renderProjects();
+
+ document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===p));
+
+ if(p==="monthly")renderMonthly();
+ if(p==="yearly")renderYearly();
+
+ if(p==="driving"){
+  driveCalendarMonth=new Date(today()+"T12:00:00");
+  selectedDriveDate=today();
+  renderDrives();
+ }
 }
-document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>showPage(b.dataset.page));
- showPage("calendar");
 function loadSettings(){
  $("employeeName").value=settings.name||"Kiss János";
  $("hourlyRate").value=settings.rate??3000;
