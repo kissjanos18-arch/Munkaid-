@@ -934,6 +934,36 @@ header::after {
  color: white;
  text-shadow: 0 0 12px #ff8095;
 }
+  /* NAPTÁR ÚJ SZÍNEI */
+
+.day.work {
+ background:rgba(46,180,110,.22);
+ color:#75e2a3;
+ border-color:rgba(46,180,110,.4);
+}
+
+.day.vacation {
+ background:rgba(50,130,255,.22);
+ color:#82b5ff;
+ border-color:rgba(50,130,255,.4);
+}
+
+.day.sick {
+ background:rgba(255,48,79,.22);
+ color:#ff8095;
+ border-color:rgba(255,48,79,.4);
+}
+
+.day.overtime {
+ background:rgba(255,160,40,.22);
+ color:#ffc477;
+ border-color:rgba(255,160,40,.4);
+}
+
+.day:not(.work):not(.vacation):not(.sick):not(.overtime) {
+ background:#252a39;
+ color:#aeb5c8;
+}
 </style>
 </head>
 <body>
@@ -1388,8 +1418,17 @@ function renderCalendar(){
  for(let i=0;i<offset;i++)html+='<div></div>';
  for(let day=1;day<=days;day++){
   let date=`${y}-${String(m+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
-  let e=works.find(x=>x.date===date),cls=e?(e.category==="Munka"?"work":e.category==="Szabadság"?"vacation":e.category==="Betegszabadság"?"sick":""):"";
-  html+=`<button class="day ${cls} ${date===selectedDate?"selected":""}" onclick="selectDay('${date}')">${day}</button>`;
+  let e=works.find(x=>x.date===date);
+let cls="";
+
+if(e){
+ if(e.category==="Szabadság") cls="vacation";
+ else if(e.category==="Betegszabadság") cls="sick";
+ else if(e.category==="Munka"){
+  cls=overtime(e)>0?"overtime":"work";
+ }
+}
+   html+=`<button class="day ${cls} ${date===selectedDate?"selected":""}" onclick="selectDay('${date}')">${day}</button>`;
  }
  $("calendarGrid").innerHTML=html;
  let month=monthEntries(selectedDate.slice(0,7)),normal=month.reduce((s,e)=>s+Math.max(0,hours(e)-overtime(e)),0),extra=month.reduce((s,e)=>s+overtime(e),0),pay=calculate(month).total;
