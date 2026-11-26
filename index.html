@@ -2213,7 +2213,32 @@ placeList.forEach(([name,h],i)=>{
   selectedDriveDate=selectedMonth+"-01";
  }
 
- renderDrives();
+ // Először a naptár frissítése
+ renderDriveCalendar();
+
+ // Utána a kiválasztott hónap vezetési listája
+ let list=$("driveList");
+
+ if(list){
+  let month=selectedMonth;
+
+  list.innerHTML=drives
+   .filter(e=>e.date && e.date.startsWith(month))
+   .slice()
+   .sort((a,b)=>b.date.localeCompare(a.date))
+   .map(e=>{
+    let km=e.km!==undefined
+     ? Number(e.km)
+     : Math.max(0,Number(e.endKm)-Number(e.startKm));
+
+    return `<div class="entry">
+     <strong>${e.date}</strong>
+     <p>${fmt(km)} km · ${fmt(duration(e.departure,e.arrival))} óra</p>
+     <p class="muted">${e.note||""}</p>
+     <button class="danger" onclick="removeDrive(${drives.indexOf(e)})">Törlés</button>
+    </div>`;
+   }).join("")||'<p class="muted">Még nincs vezetési bejegyzés.</p>';
+ }
 }
   function renderDriveCalendar(){
  let y=driveCalendarMonth.getFullYear();
