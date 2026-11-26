@@ -2202,12 +2202,6 @@ placeList.forEach(([name,h],i)=>{
  let y=driveCalendarMonth.getFullYear();
  let m=driveCalendarMonth.getMonth();
 
- $("driveMonthTitle").textContent=
-  driveCalendarMonth.toLocaleDateString("hu-HU",{
-   year:"numeric",
-   month:"long"
-  });
-
  let first=new Date(y,m,1);
  let offset=(first.getDay()+6)%7;
  let days=new Date(y,m+1,0).getDate();
@@ -2219,28 +2213,68 @@ placeList.forEach(([name,h],i)=>{
  }
 
  for(let day=1;day<=days;day++){
-  let date=y+"-"+String(m+1).padStart(2,"0")+"-"+String(day).padStart(2,"0");
+  let date=
+   y+"-"+
+   String(m+1).padStart(2,"0")+"-"+
+   String(day).padStart(2,"0");
+
   let hasDrive=drives.some(e=>e.date===date);
+  let selected=date===selectedDriveDate;
 
   html+=`
    <button type="button"
-    class="drive-day ${date===selectedDriveDate?"selected":""} ${hasDrive?"has-drive":""}"
+    class="drive-day ${hasDrive?"has-drive":""} ${selected?"selected":""}"
     onclick="selectDriveDate('${date}')">
     ${day}
     ${hasDrive?'<span class="drive-dot"></span>':""}
-   </button>`;
+   </button>
+  `;
  }
 
  $("driveCalendarGrid").innerHTML=html;
+
  $("driveDate").value=selectedDriveDate;
+
+ let selectedDate=new Date(selectedDriveDate+"T12:00:00");
 
  $("driveSelectedDate").textContent=
   "Kiválasztott nap: "+
-  new Date(selectedDriveDate+"T12:00:00").toLocaleDateString("hu-HU",{
+  selectedDate.toLocaleDateString("hu-HU",{
    year:"numeric",
    month:"long",
    day:"numeric"
   });
+}
+
+function selectDriveDate(date){
+ selectedDriveDate=date;
+ renderDrives();
+}
+  function renderDrives(){
+ let selectedMonth=driveCalendarMonth.getFullYear()+"-"+String(driveCalendarMonth.getMonth()+1).padStart(2,"0");
+
+ let list=drives
+  .map((e,i)=>({...e,originalIndex:i}))
+  .filter(e=>e.date&&e.date.startsWith(selectedMonth))
+  .sort((a,b)=>b.date.localeCompare(a.date));
+
+ if($("driveMonthTitle")){
+  $("driveMonthTitle").textContent=driveCalendarMonth.toLocaleDateString("hu-HU",{year:"numeric",month:"long"});
+ }
+
+ $("driveList").innerHTML=list.length
+  ?list.map(e=>`
+   <div class="panel">
+    <strong>${e.date}</strong>
+    <p>Távolság: ${Number(e.km||0)} km</p>
+    <p>Indulás: ${e.departure||"-"} – Érkezés: ${e.arrival||"-"}</p>
+    <p>${e.note||""}</p>
+    <button class="danger" onclick="removeDrive(${e.originalIndex})">Törlés</button>
+   </div>
+  `).join("")
+  :"<p>Ebben a hónapban nincs rögzített vezetési adat.</p>";
+
+ if($("driveCalendarGrid")) renderDriveCalendar();
 }
 
 function changeDriveMonth(amount){
