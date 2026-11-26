@@ -2133,14 +2133,58 @@ renderMonthly();
  alert("A vezetési bejegyzés elmentve!");
 }
 function renderYearly(){
- let y=Number($("reportYear").value)||new Date().getFullYear();$("reportYear").value=y;
- let es=works.filter(e=>e.date.startsWith(String(y))),c=calculate(es);
- let vacation=es.filter(e=>e.category==="Szabadság").length,sick=es.filter(e=>e.category==="Betegszabadság").length;
- $("yearlyResults").innerHTML=[
- ["Ledolgozott órák",fmt(c.normal+c.extra)+" óra"],["Túlórák",fmt(c.extra)+" óra"],
- ["Éves nettó bér",money(c.total)],["Szabadságkeret",String(settings.vacation??25)+" nap"],
- ["Felhasznált szabadság",vacation+" nap"],["Betegszabadság",sick+" nap"]
+ let y=Number($("reportYear").value)||new Date().getFullYear();
+ $("reportYear").value=y;
+
+ let es=works.filter(e=>e.date.startsWith(String(y)));
+ let c=calculate(es);
+
+ let vacation=es.filter(e=>e.category==="Szabadság").length;
+ let sick=es.filter(e=>e.category==="Betegszabadság").length;
+
+ let summary=[
+  ["Ledolgozott órák",fmt(c.normal+c.extra)+" óra"],
+  ["Túlórák",fmt(c.extra)+" óra"],
+  ["Éves nettó bér",money(c.total)],
+  ["Szabadságkeret",String(settings.vacation??25)+" nap"],
+  ["Felhasznált szabadság",vacation+" nap"],
+  ["Betegszabadság",sick+" nap"]
  ].map(x=>`<div class="row entry"><span>${x[0]}</span><strong>${x[1]}</strong></div>`).join("");
+
+ let months=["Jan","Feb","Már","Ápr","Máj","Jún","Júl","Aug","Szep","Okt","Nov","Dec"];
+
+ let monthlyData=months.map((name,i)=>{
+  let monthNumber=String(i+1).padStart(2,"0");
+  let entries=es.filter(e=>e.date.startsWith(`${y}-${monthNumber}`));
+  let result=calculate(entries);
+
+  return {
+   name,
+   hours:result.normal+result.extra
+  };
+ });
+
+ let maxHours=Math.max(1,...monthlyData.map(m=>m.hours));
+
+ let chart=`
+ <div class="card" style="margin-top:22px;">
+  <h3>Havi ledolgozott órák</h3>
+  <div style="display:flex;align-items:flex-end;justify-content:space-around;gap:7px;height:180px;padding:15px 5px 5px;">
+   ${monthlyData.map(m=>{
+    let height=m.hours>0?Math.max(5,m.hours/maxHours*125):3;
+    return `
+     <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;min-width:0;">
+      <span style="font-size:10px;color:#555;margin-bottom:5px;">${m.hours>0?fmt(m.hours):""}</span>
+      <div style="width:100%;max-width:30px;height:${height}px;border-radius:7px 7px 2px 2px;background:linear-gradient(180deg,#ff4968,#b91f3b);"></div>
+      <span style="font-size:10px;color:#777;margin-top:7px;">${m.name}</span>
+     </div>
+    `;
+   }).join("")}
+  </div>
+  <div style="text-align:center;font-size:12px;color:#888;">Ledolgozott órák hónaponként</div>
+ </div>`;
+
+ $("yearlyResults").innerHTML=summary+chart;
 }
 function renderProjectOptions(selectedValue=""){
  let select=$("workplace");
