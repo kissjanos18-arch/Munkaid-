@@ -1005,15 +1005,14 @@ header::after {
 #monthlyResults .row.entry:nth-of-type(odd){
  border-left:4px solid #36b878;
 }
-
-#monthlyResults .row.entry:last-of-type{
- background:linear-gradient(135deg,#8e1830,#c62828);
- border:1px solid #ff657b;
+#monthlyResults .final-total{
+ background:linear-gradient(135deg,#8e1830,#c62828)!important;
+ border:1px solid #ff657b!important;
  box-shadow:0 5px 18px rgba(198,40,40,.25);
 }
 
-#monthlyResults .row.entry:last-of-type strong{
- color:#ffffff;
+#monthlyResults .final-total strong{
+ color:#ffffff!important;
  font-size:16px;
 }
 </style>
@@ -1876,7 +1875,7 @@ placeList.forEach(([name,h],i)=>{
  <div class="row entry"><span>Vezetési idő díja</span><strong>${money(drivingPay)}</strong></div>
 <div class="row entry"><span>Kilométerpénz (7 Ft/km)</span><strong>${money(kmPay)}</strong></div>
 <div class="row entry"><strong>Nettó munkabér</strong><strong>${money(c.total)}</strong></div>
-<div class="row entry"><strong>Összesen kifizetendő (vezetéssel és kilométerpénzzel)</strong><strong>${money(totalWithDriving)}</strong></div>
+<div class="row entry final-total"><strong>Összesen kifizetendő (vezetéssel és kilométerpénzzel)</strong><strong>${money(totalWithDriving)}</strong></div>
 <h3>Munkaórák projektenként</h3>
  ${chart}
  ${legend}
