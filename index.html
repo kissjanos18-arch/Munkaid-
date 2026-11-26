@@ -1931,13 +1931,12 @@ function calculate(es){
 
  return Math.max(0,(end-start)/60);
 }
-  function changeReportMonth(direction){
+ function changeReportMonth(direction){
  let input=$("reportMonth");
  let date=new Date(input.value+"-01T12:00:00");
  date.setMonth(date.getMonth()+direction);
  input.value=date.getFullYear()+"-"+String(date.getMonth()+1).padStart(2,"0");
  renderMonthly();
- renderDrives();
 }
 function renderMonthly(){
  let m=$("reportMonth").value||currentMonth();
@@ -2185,12 +2184,8 @@ placeList.forEach(([name,h],i)=>{
  <div class="row entry"><span>Vezetési idő</span><strong>${fmt(driving)} óra</strong></div>`;
 }
   function renderDriveCalendar(){
- let selectedMonth=$("reportMonth").value||currentMonth();
- driveCalendarMonth=new Date(selectedMonth+"-01T12:00:00");
-
- if(!selectedDriveDate || !selectedDriveDate.startsWith(selectedMonth)){
-  selectedDriveDate=selectedMonth+"-01";
- }
+let y=driveCalendarMonth.getFullYear();
+let m=driveCalendarMonth.getMonth();
 
  let y=driveCalendarMonth.getFullYear();
  let m=driveCalendarMonth.getMonth();
