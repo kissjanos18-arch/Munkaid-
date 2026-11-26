@@ -2207,15 +2207,12 @@ placeList.forEach(([name,h],i)=>{
  let m=String(driveCalendarMonth.getMonth()+1).padStart(2,"0");
  let selectedMonth=y+"-"+m;
 
-if(!selectedDriveDate || !selectedDriveDate.startsWith(selectedMonth)){
-  let day=Math.min(
-   Number(selectedDriveDate?.slice(8,10))||new Date().getDate(),
-   new Date(y,Number(m),0).getDate()
-  );
-  selectedDriveDate=selectedMonth+"-"+String(day).padStart(2,"0");
-}
+ if(selectedMonth===currentMonth()){
+  selectedDriveDate=today();
+ }else{
+  selectedDriveDate=selectedMonth+"-01";
+ }
 
- renderDriveCalendar();
  renderDrives();
 }
   function renderDriveCalendar(){
