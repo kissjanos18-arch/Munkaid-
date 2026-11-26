@@ -1007,6 +1007,9 @@ header::after {
 <label>Elszámolt órák</label><input type="number" id="leaveHours" min="0" max="24" step="0.5" value="8">
 </div>
 <button class="primary" onclick="saveWork()">Bejegyzés mentése</button>
+  <button class="secondary" onclick="copyPreviousWorkday()">
+ Előző munkanap adatainak átvétele
+</button>
 <button class="secondary" onclick="deleteWork()" id="deleteWorkButton">Bejegyzés törlése</button>
 </div>
 <div class="panel">
@@ -1241,7 +1244,40 @@ function preview(){
  $("workedPreview").textContent="Ledolgozott idő: "+fmt(hours(e))+" óra";
 }
 ["start","end","breakMinutes"].forEach(id=>$(id).addEventListener("input",preview));
-function saveWork(){
+function copyPreviousWorkday(){
+ let targetDate=$("workDate").value;
+
+ if(!targetDate){
+  alert("Először válassz ki egy napot!");
+  return;
+ }
+
+ let previous=works
+  .filter(e=>e.date<targetDate && e.category==="Munka")
+  .sort((a,b)=>b.date.localeCompare(a.date))[0];
+
+ if(!previous){
+  alert("Nem található korábbi munkanap!");
+  return;
+ }
+
+ $("category").value=previous.category;
+ $("start").value=previous.start||"08:00";
+ $("end").value=previous.end||"16:00";
+ $("breakMinutes").value=previous.breakMinutes??0;
+ $("planned").value=previous.planned??8;
+ $("bonus").value=previous.bonus??0;
+ $("leaveHours").value=previous.leaveHours??0;
+
+ renderProjectOptions(previous.workplace||"");
+ $("workplace").value=previous.workplace||"";
+
+ toggleWorkFields();
+ preview();
+
+ alert("Az előző munkanap adatai átvéve!");
+}
+  function saveWork(){
  let date=$("workDate").value;if(!date)return alert("Válassz dátumot!");
  let e={date,category:$("category").value,start:$("start").value,end:$("end").value,breakMinutes:Number($("breakMinutes").value)||0,planned:Number($("planned").value)||0,workplace:$("workplace").value||"Nincs megadva",bonus:Number($("bonus").value)||0,leaveHours:Number($("leaveHours").value)||0};
   works=works.filter(x=>x.date!==date);works.push(e);selectedDate=date;persist();renderAll();alert("Napi bejegyzés elmentve.");
