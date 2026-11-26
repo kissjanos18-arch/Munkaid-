@@ -952,10 +952,27 @@ A piros aktív men
 }
 
 .glass-nav .nav-icon{
- font-size:21px;
- line-height:1;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ width:25px;
+ height:25px;
+ color:#ff4968;
 }
 
+.glass-nav .nav-icon svg{
+ width:23px;
+ height:23px;
+ stroke:currentColor;
+ fill:none;
+ stroke-width:1.8;
+ stroke-linecap:round;
+ stroke-linejoin:round;
+}
+
+.glass-nav button.active .nav-icon{
+ color:#ffffff;
+}
 .glass-nav button:active{
  transform:scale(.95);
 }
