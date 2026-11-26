@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#c62828">
-<meta name="apple-mobile-web-app-capable" content="yes">
+<meta namea="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Munkaidő">
 <title>Munkaidő-nyilvántartó</title>
@@ -1332,9 +1332,9 @@ button.secondary{
 <div id="monthlyResults"></div>
 </div>
 <div class="panel">
-<h3>HTML-kimutatás</h3>
-<button class="primary" onclick="exportHTML()">Havi kimutatás letöltése</button>
-  <button class="primary" onclick="printPayStatement()">Havi bérkimutatás nyomtatása / PDF</button>
+<h3>HTML-kimutatások letöltése</h3>
+<button class="primary" onclick="exportHTML()">Munkaidő-kimutatás letöltése (összegek nélkül)</button>
+<button class="primary" onclick="exportPayHTML()">Részletes bérkimutatás letöltése (bérekkel és számításokkal)</button>
 </div>
 </section>
 
@@ -2446,136 +2446,153 @@ function setProjectHours(i){
  renderProjects();
 }
   
-function exportHTML(){
- let m=$("reportMonth").value||currentMonth(),es=monthEntries(m).slice().sort((a,b)=>a.date.localeCompare(b.date));
- let rows=es.map(e=>`<tr><td>${e.date}</td><td>${e.category==="Munka"?(e.workplace||""):(e.category==="Szabadság"||e.category==="Betegszabadság"?e.category:"")}</td><td>${e.category==="Munka"?e.start:""}</td><td>${e.category==="Munka"?e.end:""}</td><td>${e.category==="Munka"?fmt(hours(e))+" óra":(e.category==="Szabadság"||e.category==="Betegszabadság"?(Number(e.leaveHours)||0)+" óra":"")}</td></tr>`).join("");
- let total=es.reduce((s,e)=>s+hours(e),0);
- let html=`<!DOCTYPE html><html lang="hu"><meta charset="UTF-8"><title>Munkaidő-kimutatás</title><style>body{font-family:Arial;margin:25px}h1{color:#c62828}table{border-collapse:collapse;width:100%}td,th{border:1px solid #ccc;padding:9px;text-align:center}th{background:#c62828;color:white}</style><h1>Havi munkaidő-kimutatás</h1><p>Dolgozó neve: ${settings.name||"Kiss János"}</p><p>Hónap: ${m}</p><table><tr><th>Dátum</th><th>Munkavégzés helye</th><th>Kezdés</th><th>Befejezés</th><th>Ledolgozott idő</th></tr>${rows}</table><h3>Összes ledolgozott idő: ${fmt(total)} óra</h3></html>`;
- let blob=new Blob([html],{type:"text/html;charset=utf-8"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="munkaido-kimutatas.html";a.click();URL.revokeObjectURL(url);
+function downloadReportHTML(html,filename){
+ let blob=new Blob([html],{type:"text/html;charset=utf-8"});
+ let url=URL.createObjectURL(blob);
+ let a=document.createElement("a");
+ a.href=url;
+ a.download=filename;
+ document.body.appendChild(a);
+ a.click();
+ a.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
-  function printPayStatement(){
- let m=$("reportMonth").value||currentMonth();
- let es=monthEntries(m);
+
+function reportEscape(value){
+ return String(value??"").replace(/[&<>"']/g,ch=>({
+  "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+ })[ch]);
+}
+
+function buildReportPage(title,m,body){
+ return `<!DOCTYPE html>
+ <html lang="hu">
+ <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+ <title>${reportEscape(title)} – ${reportEscape(m)}</title>
+ <style>
+ body{font-family:Arial,sans-serif;margin:24px;color:#222;line-height:1.4}
+ h1{color:#b71c1c;margin-bottom:5px}
+ h2{font-size:17px;margin:25px 0 8px;border-bottom:2px solid #ddd;padding-bottom:6px}
+ p{margin:6px 0}
+ table{border-collapse:collapse;width:100%;margin:10px 0 18px}
+ th,td{border:1px solid #ccc;padding:7px;text-align:left;font-size:13px}
+ th{background:#f1f1f1}
+ .right{text-align:right}
+ .total{font-weight:bold;background:#f3f3f3}
+ @media(max-width:600px){body{margin:12px}th,td{padding:5px;font-size:11px}}
+ </style></head><body>
+ <h1>${reportEscape(title)}</h1>
+ <p>Dolgozó neve: <strong>${reportEscape(settings.name||"Kiss János")}</strong></p>
+ <p>Elszámolási hónap: <strong>${reportEscape(m)}</strong></p>
+ ${body}
+ </body></html>`;
+}
+
+function reportRows(es){
+ return es.map(e=>`<tr>
+ <td>${reportEscape(e.date)}</td>
+ <td>${reportEscape(e.category==="Munka"?(e.workplace||""):(e.category||""))}</td>
+ <td>${e.category==="Munka"?reportEscape(e.start||""):""}</td>
+ <td>${e.category==="Munka"?reportEscape(e.end||""):""}</td>
+ <td class="right">${e.category==="Munka"?fmt(hours(e))+" óra":(e.category==="Szabadság"||e.category==="Betegszabadság"?fmt(Number(e.leaveHours)||0)+" óra":"")}</td>
+ </tr>`).join("");
+}
+
+function reportSummary(m){
+ let es=monthEntries(m).slice().sort((a,b)=>a.date.localeCompare(b.date));
  let c=calculate(es);
- let rate=Number(settings.rate??3000);
-
- let normalPay=c.normal*rate;
- let overtimeRate=Number(settings.overtime??150);
- let overtimePay=c.extra*rate*(overtimeRate/100);
- let vacationPay=c.vac*rate;
- let sickRate=Number(settings.sick??70);
- let sickPay=c.sick*rate*(sickRate/100);
-
  let workEntries=es.filter(e=>e.category==="Munka");
- let totalHours=workEntries.reduce((s,e)=>s+hours(e),0);
+ let totalHours=workEntries.reduce((sum,e)=>sum+hours(e),0);
  let avgHours=workEntries.length?totalHours/workEntries.length:0;
-
  let vacationDays=es.filter(e=>e.category==="Szabadság").length;
  let sickDays=es.filter(e=>e.category==="Betegszabadság").length;
-
  let monthDrives=drives.filter(e=>e.date.startsWith(m));
- let km=monthDrives.reduce((s,e)=>s+Number(e.km??Math.max(0,Number(e.endKm)-Number(e.startKm))),0);
- let driving=monthDrives.reduce((s,e)=>s+duration(e.departure,e.arrival),0);
- let drivingPay=driving*rate;
- let kmPay=km*Number(settings.kmRate??7);
-
+ let km=monthDrives.reduce((sum,e)=>sum+Number(e.km??Math.max(0,Number(e.endKm)-Number(e.startKm))),0);
+ let driving=monthDrives.reduce((sum,e)=>sum+duration(e.departure,e.arrival),0);
  let commuteTrips=workEntries.reduce((sum,e)=>{
-  if(e.workplace==="Műhely") return sum+2;
+  if(e.workplace==="Műhely")return sum+2;
   return sum+(e.commuteTo?1:0)+(e.commuteHome?1:0);
  },0);
-
  let commuteKm=commuteTrips*Number(settings.commuteDistance??0);
- let commutePay=commuteKm*Number(settings.commuteRate??30);
- let total=c.total+drivingPay+kmPay+commutePay;
-
  let places={};
  workEntries.forEach(e=>{
-  let p=e.workplace||"Nincs megadva";
-  places[p]=(places[p]||0)+hours(e);
+  let name=e.workplace||"Nincs megadva";
+  places[name]=(places[name]||0)+hours(e);
  });
-
  let placeRows=Object.entries(places).map(([name,h])=>
-  `<tr><td>${name}</td><td>${fmt(h)} óra</td><td>${totalHours>0?Math.round(h/totalHours*100):0}%</td></tr>`
+  `<tr><td>${reportEscape(name)}</td><td class="right">${fmt(h)} óra</td><td class="right">${totalHours?Math.round(h/totalHours*100):0}%</td></tr>`
  ).join("");
-
- let w=(label,value)=>
-  `<tr><td>${label}</td><td class="right">${value}</td></tr>`;
-
- let html=`<!DOCTYPE html>
- <html lang="hu">
- <head>
- <meta charset="UTF-8">
- <title>Havi bérkimutatás</title>
- <style>
- body{font-family:Arial,sans-serif;margin:35px;color:#222}
- h1{color:#c62828;margin-bottom:5px}
- h2{font-size:18px;margin-top:28px;border-bottom:2px solid #ddd;padding-bottom:7px}
- table{width:100%;border-collapse:collapse;margin-top:10px}
- td,th{border:1px solid #ddd;padding:9px;text-align:left}
- th{background:#f1f1f1}
- .right{text-align:right;font-weight:bold}
- .total{font-size:19px;font-weight:bold;background:#f1f1f1}
- .info{margin:8px 0}
- @page{size:A4;margin:10mm}
-@media print{
- body{margin:0;font-size:10px}
- h1{font-size:20px}
- h2{font-size:14px;margin-top:14px}
- td,th{padding:5px}
+ return {es,c,workEntries,totalHours,avgHours,vacationDays,sickDays,monthDrives,km,driving,commuteTrips,commuteKm,placeRows};
 }
- </style>
- </head>
- <body>
- <h1>Havi bérkimutatás</h1>
- <p class="info">Dolgozó neve: <strong>${settings.name||"Kiss János"}</strong></p>
- <p class="info">Elszámolási hónap: <strong>${m}</strong></p>
 
- <h2>Munkaidő</h2>
+function exportHTML(){
+ let m=$("reportMonth").value||currentMonth();
+ let r=reportSummary(m);
+ let body=`
+ <h2>Napi munkaidő-bejegyzések</h2>
+ <table><tr><th>Dátum</th><th>Hely / nap típusa</th><th>Kezdés</th><th>Befejezés</th><th>Időtartam</th></tr>${reportRows(r.es)}</table>
+ <h2>Munkaidő összesítése</h2>
  <table>
- ${w("Normál munkaóra",fmt(c.normal)+" óra")}
- ${w("Túlóra",fmt(c.extra)+" óra")}
- ${w("Összes ledolgozott idő",fmt(totalHours)+" óra")}
- ${w("Napi átlagos munkaidő",fmt(avgHours)+" óra")}
+ <tr><td>Normál munkaóra</td><td class="right">${fmt(r.c.normal)} óra</td></tr>
+ <tr><td>Túlóra</td><td class="right">${fmt(r.c.extra)} óra</td></tr>
+ <tr><td>Összes ledolgozott munkaidő</td><td class="right">${fmt(r.totalHours)} óra</td></tr>
+ <tr><td>Napi átlagos munkaidő</td><td class="right">${fmt(r.avgHours)} óra</td></tr>
+ <tr><td>Szabadság</td><td class="right">${r.vacationDays} nap, ${fmt(r.c.vac)} óra</td></tr>
+ <tr><td>Betegszabadság</td><td class="right">${r.sickDays} nap, ${fmt(r.c.sick)} óra</td></tr>
+ <tr><td>Vezetési idő</td><td class="right">${fmt(r.driving)} óra</td></tr>
+ <tr><td>Munkavégzés közbeni kilométer</td><td class="right">${fmt(r.km)} km</td></tr>
+ <tr><td>Munkába járás</td><td class="right">${fmt(r.commuteKm)} km (${r.commuteTrips} út)</td></tr>
  </table>
+ <h2>Munkahelyenkénti munkaidő és arány</h2>
+ <table><tr><th>Munkahely / projekt</th><th>Ledolgozott idő</th><th>Arány</th></tr>${r.placeRows||"<tr><td colspan='3'>Nincs adat</td></tr>"}</table>`;
+ downloadReportHTML(buildReportPage("Havi munkaidő-kimutatás",m,body),"munkaido-kimutatas-"+m+".html");
+}
 
- <h2>Bér részletezése</h2>
+function exportPayHTML(){
+ let m=$("reportMonth").value||currentMonth();
+ let r=reportSummary(m);
+ let rate=Number(settings.rate??3000);
+ let overtimeRate=Number(settings.overtime??150);
+ let sickRate=Number(settings.sick??70);
+ let normalPay=r.c.normal*rate;
+ let overtimePay=r.c.extra*rate*(overtimeRate/100);
+ let vacationPay=r.c.vac*rate;
+ let sickPay=r.c.sick*rate*(sickRate/100);
+ let drivingPay=r.driving*rate;
+ let kmPay=r.km*Number(settings.kmRate??7);
+ let commutePay=r.commuteKm*Number(settings.commuteRate??30);
+ let total=r.c.total+drivingPay+kmPay+commutePay;
+ let body=`
+ <h2>Napi munkaidő-bejegyzések</h2>
+ <table><tr><th>Dátum</th><th>Hely / nap típusa</th><th>Kezdés</th><th>Befejezés</th><th>Időtartam</th></tr>${reportRows(r.es)}</table>
+ <h2>Munkaidő összesítése</h2>
  <table>
- ${w("Alap munkabér",money(normalPay))}
- ${w("Túlóra ("+overtimeRate+"%)",money(overtimePay))}
- ${w("Szabadság ("+vacationDays+" nap, "+fmt(c.vac)+" óra)",money(vacationPay))}
- ${w("Betegszabadság ("+sickDays+" nap, "+fmt(c.sick)+" óra, "+sickRate+"%)",money(sickPay))}
- ${w("Bónusz",money(c.bonus))}
- ${w("Vezetési idő díja ("+fmt(driving)+" óra)",money(drivingPay))}
- ${w("Munkavégzés közbeni kilométer ("+fmt(km)+" km)",money(kmPay))}
- ${w("Munkába járás támogatása ("+fmt(commuteKm)+" km)",money(commutePay))}
+ <tr><td>Normál munkaóra</td><td class="right">${fmt(r.c.normal)} óra</td></tr>
+ <tr><td>Túlóra</td><td class="right">${fmt(r.c.extra)} óra</td></tr>
+ <tr><td>Összes ledolgozott munkaidő</td><td class="right">${fmt(r.totalHours)} óra</td></tr>
+ <tr><td>Napi átlagos munkaidő</td><td class="right">${fmt(r.avgHours)} óra</td></tr>
+ <tr><td>Szabadság</td><td class="right">${r.vacationDays} nap, ${fmt(r.c.vac)} óra</td></tr>
+ <tr><td>Betegszabadság</td><td class="right">${r.sickDays} nap, ${fmt(r.c.sick)} óra</td></tr>
+ </table>
+ <h2>Bér és díjazások részletezése</h2>
+ <table>
+ <tr><td>Nettó órabér</td><td class="right">${money(rate)}</td></tr>
+ <tr><td>Normál munkabér (${fmt(r.c.normal)} óra × ${money(rate)})</td><td class="right">${money(normalPay)}</td></tr>
+ <tr><td>Túlóra (${fmt(r.c.extra)} óra, ${overtimeRate}%)</td><td class="right">${money(overtimePay)}</td></tr>
+ <tr><td>Szabadság (${r.vacationDays} nap, ${fmt(r.c.vac)} óra)</td><td class="right">${money(vacationPay)}</td></tr>
+ <tr><td>Betegszabadság (${r.sickDays} nap, ${fmt(r.c.sick)} óra, ${sickRate}%)</td><td class="right">${money(sickPay)}</td></tr>
+ <tr><td>Bónusz</td><td class="right">${money(r.c.bonus)}</td></tr>
+ <tr><td>Vezetési idő (${fmt(r.driving)} óra × órabér)</td><td class="right">${money(drivingPay)}</td></tr>
+ <tr><td>Munkavégzés közbeni kilométer (${fmt(r.km)} km × ${Number(settings.kmRate??7)} Ft/km)</td><td class="right">${money(kmPay)}</td></tr>
+ <tr><td>Munkába járás (${fmt(r.commuteKm)} km × ${Number(settings.commuteRate??30)} Ft/km)</td><td class="right">${money(commutePay)}</td></tr>
  <tr class="total"><td>Összesen kifizetendő nettó</td><td class="right">${money(total)}</td></tr>
  </table>
-
- <h2>Munkahelyenkénti összesítés</h2>
- <table>
- <tr><th>Munkahely</th><th>Ledolgozott idő</th><th>Arány</th></tr>
- ${placeRows||"<tr><td colspan='3'>Nincs adat</td></tr>"}
- </table>
-
- <p style="margin-top:45px">Dátum: ____________________</p>
- <p style="margin-top:35px">Aláírás: ______________________________</p>
-
- <script>
- window.onload=function(){window.print();}
- <\/script>
- </body>
- </html>`;
-
- let win=window.open("","_blank");
- if(!win){
-  alert("A böngésző letiltotta a nyomtatási ablakot. Engedélyezd az előugró ablakokat.");
-  return;
- }
- win.document.open();
- win.document.write(html);
- win.document.close();
+ <h2>Munkahelyenkénti munkaidő és arány</h2>
+ <table><tr><th>Munkahely / projekt</th><th>Ledolgozott idő</th><th>Arány</th></tr>${r.placeRows||"<tr><td colspan='3'>Nincs adat</td></tr>"}</table>
+ <p><strong>Megjegyzés:</strong> A kimutatás az alkalmazásban rögzített adatokból és beállított díjakból készült.</p>`;
+ downloadReportHTML(buildReportPage("Havi részletes bérkimutatás",m,body),"reszletes-berkimutatas-"+m+".html");
 }
-function renderAll(){renderCalendar();renderMonthly();renderYearly();renderDrives()}
+  function renderAll(){renderCalendar();renderMonthly();renderYearly();renderDrives()}
 $("reportMonth").value=currentMonth();$("reportYear").value=new Date().getFullYear();
 $("driveDate").value=today();loadSettings();loadWork(null);renderAll();
 </script>
