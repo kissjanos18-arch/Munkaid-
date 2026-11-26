@@ -1241,6 +1241,8 @@ button.secondary{
 <select id="workplace" onchange="handleWorkplaceChange()">
  <option value="">Válassz projektet vagy helyszínt</option>
 </select>
+  <label for="dailyTask">Az aznapi feladatok</label>
+<textarea id="dailyTask" rows="3" placeholder="Írd le, milyen munkát végeztél ma..."></textarea>
   <div id="commuteOptions" class="panel" style="display:none;">
  <h3>Munkába járás</h3>
 
@@ -1727,7 +1729,7 @@ function loadWork(e){
  let oldPlace=e?.workplace||"";
  renderProjectOptions(oldPlace);
  $("workplace").value=oldPlace;
-
+$("dailyTask").value=e?.dailyTask||"";
  $("bonus").value=e?.bonus??0;
  $("leaveHours").value=e?.leaveHours??8;
 
@@ -1826,6 +1828,7 @@ function endWorkNow(){
  breakMinutes:Number($("breakMinutes").value)||0,
  planned:Number($("planned").value)||0,
  workplace:$("workplace").value||"Nincs megadva",
+   dailyTask:$("dailyTask").value,
  bonus:Number($("bonus").value)||0,
  leaveHours:Number($("leaveHours").value)||0,
  commuteTo:$("commuteTo").checked,
