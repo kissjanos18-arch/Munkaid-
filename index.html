@@ -2198,48 +2198,6 @@ placeList.forEach(([name,h],i)=>{
 <div class="row entry"><span>Munkába járások száma</span><strong>${commuteTrips} út</strong></div>
  <div class="row entry"><span>Vezetési idő</span><strong>${fmt(driving)} óra</strong></div>`;
 }
-  function changeDriveMonth(direction){
- driveCalendarMonth.setMonth(
-  driveCalendarMonth.getMonth()+direction
- );
-
- let y=driveCalendarMonth.getFullYear();
- let m=String(driveCalendarMonth.getMonth()+1).padStart(2,"0");
- let selectedMonth=y+"-"+m;
-
- if(selectedMonth===currentMonth()){
-  selectedDriveDate=today();
- }else{
-  selectedDriveDate=selectedMonth+"-01";
- }
-
- // Először a naptár frissítése
- renderDriveCalendar();
-
- // Utána a kiválasztott hónap vezetési listája
- let list=$("driveList");
-
- if(list){
-  let month=selectedMonth;
-
-  list.innerHTML=drives
-   .filter(e=>e.date && e.date.startsWith(month))
-   .slice()
-   .sort((a,b)=>b.date.localeCompare(a.date))
-   .map(e=>{
-    let km=e.km!==undefined
-     ? Number(e.km)
-     : Math.max(0,Number(e.endKm)-Number(e.startKm));
-
-    return `<div class="entry">
-     <strong>${e.date}</strong>
-     <p>${fmt(km)} km · ${fmt(duration(e.departure,e.arrival))} óra</p>
-     <p class="muted">${e.note||""}</p>
-     <button class="danger" onclick="removeDrive(${drives.indexOf(e)})">Törlés</button>
-    </div>`;
-   }).join("")||'<p class="muted">Még nincs vezetési bejegyzés.</p>';
- }
-}
   function renderDriveCalendar(){
  let y=driveCalendarMonth.getFullYear();
  let m=driveCalendarMonth.getMonth();
@@ -2291,37 +2249,18 @@ function changeDriveMonth(amount){
   driveCalendarMonth.getMonth()+amount,
   1
  );
- renderDriveCalendar();
-}
 
-function selectDriveDate(date){
- selectedDriveDate=date;
- renderDriveCalendar();
+ let y=driveCalendarMonth.getFullYear();
+ let m=String(driveCalendarMonth.getMonth()+1).padStart(2,"0");
+ let selectedMonth=y+"-"+m;
+
+ if(selectedMonth===currentMonth()){
+  selectedDriveDate=today();
+ }else{
+  selectedDriveDate=selectedMonth+"-01";
+ }
+
  renderDrives();
-}
-function renderDrives(){
- let selectedMonth=
-  driveCalendarMonth.getFullYear()+"-"+
-  String(driveCalendarMonth.getMonth()+1).padStart(2,"0");
-
- $("driveList").innerHTML=drives
- .filter(e=>e.date.startsWith(selectedMonth))
- .slice()
- .sort((a,b)=>b.date.localeCompare(a.date))
- .map(e=>{
-  let km=e.km!==undefined
-   ? Number(e.km)
-   : Math.max(0,Number(e.endKm)-Number(e.startKm));
-
-  return `<div class="entry">
-   <strong>${e.date}</strong>
-   <p>${fmt(km)} km · ${fmt(duration(e.departure,e.arrival))} óra</p>
-   <p class="muted">${e.note||""}</p>
-   <button class="danger" onclick="removeDrive(${drives.indexOf(e)})">Törlés</button>
-  </div>`;
- }).join("")||'<p class="muted">Még nincs vezetési bejegyzés.</p>';
-
- if($("driveCalendarGrid"))renderDriveCalendar();
 }
 function removeDrive(i){drives.splice(i,1);persist();renderDrives()}
   
