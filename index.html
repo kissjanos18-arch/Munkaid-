@@ -1108,6 +1108,21 @@ header::after {
 <h3>Szabadság</h3>
 <label>Éves szabadságkeret (nap)</label><input type="number" id="vacationAllowance" value="25">
 </div>
+  <div class="panel">
+ <h3>Biztonsági mentés</h3>
+ <p class="muted">
+  Munkaidő, vezetés, projektek és beállítások mentése.
+ </p>
+
+ <button class="primary" onclick="exportBackup()">
+  Biztonsági mentés letöltése
+ </button>
+
+ <label>Korábbi mentés visszaállítása</label>
+ <input type="file" id="backupFile"
+  accept=".json,application/json"
+  onchange="importBackup(event)">
+</div>
 <button class="primary" onclick="saveSettings()">Beállítások mentése</button>
 </section>
   <section id="projects" class="page hidden">
@@ -1188,7 +1203,177 @@ function loadSettings(){
  updateHeader();
 }
 function updateHeader(){$("heading").textContent=settings.name||"Munkaidő-nyilvántartó"}
-function saveSettings(){
+function exportBackup(){
+ const backup={
+  app:"Munkaidő-nyilvántartó",
+  version:1,
+  createdAt:new Date().toISOString(),
+  works:works,
+  drives:drives,
+  projects:projects,
+  settings:settings
+ };
+
+ const blob=new Blob(
+  [JSON.stringify(backup,null,2)],
+  {type:"application/json"}
+ );
+
+ const url=URL.createObjectURL(blob);
+ const a=document.createElement("a");
+
+ a.href=url;
+ a.download="munkaido-mentes-"+new Date().toISOString().slice(0,10)+".json";
+
+ document.body.appendChild(a);
+ a.click();
+ a.remove();
+
+ setTimeout(()=>URL.revokeObjectURL(url),1000);
+
+ alert("A biztonsági mentés letöltése elindult.");
+}
+
+function importBackup(event){
+ const file=event.target.files?.[0];
+ const input=event.target;
+
+ if(!file)return;
+
+ const reader=new FileReader();
+
+ reader.onload=()=>{
+  try{
+   const data=JSON.parse(reader.result);
+
+   if(
+    !data ||
+    !Array.isArray(data.works) ||
+    !Array.isArray(data.drives) ||
+    !Array.isArray(data.projects) ||
+    !data.settings ||
+    typeof data.settings!=="object" ||
+    Array.isArray(data.settings)
+   ){
+    throw new Error("Hibás mentés");
+   }
+
+   if(!confirm(
+    "A visszaállítás lecseréli a jelenlegi munkaidő-, vezetési, projekt- és beállításadatokat. Folytatod?"
+   )){
+    input.value="";
+    return;
+   }
+
+   works=data.works;
+   drives=data.drives;
+   projects=data.projects.map(p=>
+    typeof p==="string"?{name:p,hours:8}:p
+   );
+   settings=data.settings;
+
+   persist();
+   localStorage.setItem("settings",JSON.stringify(settings));
+
+   alert("A biztonsági mentés visszaállítása sikerült.");
+   location.reload();
+
+  }catch(error){
+   alert("A mentés nem olvasható vagy nem megfelelő formátumú.");
+  }
+
+  input.value="";
+ };
+
+ reader.onerror=()=>{
+  alert("A fájl beolvasása nem sikerült.");
+  input.value="";
+ };
+
+ reader.readAsText(file);
+}
+  function exportBackup(){
+ const backup={
+  app:"Munkaidő-nyilvántartó",
+  version:1,
+  createdAt:new Date().toISOString(),
+  works:works,
+  drives:drives,
+  projects:projects,
+  settings:settings
+ };
+
+ const blob=new Blob(
+  [JSON.stringify(backup,null,2)],
+  {type:"application/json"}
+ );
+
+ const url=URL.createObjectURL(blob);
+ const a=document.createElement("a");
+
+ a.href=url;
+ a.download="munkaido-mentes-"+today()+".json";
+
+ document.body.appendChild(a);
+ a.click();
+ a.remove();
+
+ URL.revokeObjectURL(url);
+
+ alert("A biztonsági mentés letöltése elindult.");
+}
+
+function importBackup(event){
+ const file=event.target.files?.[0];
+ if(!file)return;
+
+ const reader=new FileReader();
+
+ reader.onload=()=>{
+  try{
+   const data=JSON.parse(reader.result);
+
+   if(
+    !data ||
+    !Array.isArray(data.works) ||
+    !Array.isArray(data.drives) ||
+    !Array.isArray(data.projects) ||
+    !data.settings ||
+    typeof data.settings!=="object"
+   ){
+    throw new Error("Hibás mentés");
+   }
+
+   if(!confirm(
+    "A visszaállítás lecseréli a jelenlegi munkaidő-, vezetési-, projekt- és beállításadatokat. Folytatod?"
+   ))return;
+
+   works=data.works;
+   drives=data.drives;
+   projects=data.projects.map(p=>
+    typeof p==="string"?{name:p,hours:8}:p
+   );
+   settings=data.settings;
+
+   persist();
+   localStorage.setItem("settings",JSON.stringify(settings));
+
+   alert("A biztonsági mentés visszaállítása sikerült.");
+   location.reload();
+
+  }catch(error){
+   alert("A mentés nem olvasható vagy nem megfelelő formátumú.");
+  }
+ };
+
+ reader.onerror=()=>{
+  alert("A fájl beolvasása nem sikerült.");
+ };
+
+ reader.readAsText(file);
+ event.target.value="";
+}
+  function saveSettings(){
  settings={name:$("employeeName").value,rate:Number($("hourlyRate").value)||0,overtime:Number($("overtimePercent").value)||150,sick:Number($("sickPercent").value)||70,vacation:Number($("vacationAllowance").value)||0};
  localStorage.setItem("settings",JSON.stringify(settings));updateHeader();renderAll();alert("Beállítások elmentve.");
 }
