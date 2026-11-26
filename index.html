@@ -1241,6 +1241,19 @@ button.secondary{
 <select id="workplace" onchange="handleWorkplaceChange()">
  <option value="">Válassz projektet vagy helyszínt</option>
 </select>
+  <div id="commuteOptions" class="panel" style="display:none;">
+ <h3>Munkába járás</h3>
+
+ <label>
+  <input type="checkbox" id="commuteTo">
+  Munkába mentem
+ </label>
+
+ <label>
+  <input type="checkbox" id="commuteHome">
+  Hazamentem
+ </label>
+</div>
 <label>Napi bónusz (%)</label><input type="number" id="bonus" min="0" value="0">
 <p class="muted" id="workedPreview">Ledolgozott idő: 8,00 óra</p>
 </div>
@@ -1412,7 +1425,7 @@ let settings={
   let projects=JSON.parse(localStorage.getItem("projects")||"[]").map(p=>
  typeof p==="string"?{name:p,hours:8}:p
 );
-let selectedDate=today(), editDate=null;
+
   let selectedDriveDate = today();
 let driveCalendarMonth = new Date();
 function persist(){
@@ -1717,14 +1730,37 @@ function loadWork(e){
  $("bonus").value=e?.bonus??0;
  $("leaveHours").value=e?.leaveHours??8;
 
+ $("commuteTo").checked=e?.commuteTo===true;
+ $("commuteHome").checked=e?.commuteHome===true;
+
+ $("commuteOptions").style.display=
+  ($("category").value==="Munka" && oldPlace && oldPlace!=="Műhely")
+  ?"block":"none";
+
  editDate=e?date:null;
  $("deleteWorkButton").classList.toggle("hidden",!e);
  toggleWorkFields();
  preview();
 }
 function toggleWorkFields(){
- let c=$("category").value;$("workFields").classList.toggle("hidden",c!=="Munka");
- $("leaveFields").classList.toggle("hidden",c!=="Szabadság"&&c!=="Betegszabadság");
+ let c=$("category").value;
+
+ $("workFields").classList.toggle("hidden",c!=="Munka");
+
+ $("leaveFields").classList.toggle(
+  "hidden",
+  c!=="Szabadság" && c!=="Betegszabadság"
+ );
+
+ let place=$("workplace").value;
+ let showCommute=c==="Munka" && place!=="" && place!=="Műhely";
+
+ $("commuteOptions").style.display=showCommute?"block":"none";
+
+ if(!showCommute){
+  $("commuteTo").checked=false;
+  $("commuteHome").checked=false;
+ }
 }
 function preview(){
  let e={category:"Munka",start:$("start").value,end:$("end").value,breakMinutes:$("breakMinutes").value};
@@ -1781,8 +1817,20 @@ function endWorkNow(){
 }
   function saveWork(){
  let date=$("workDate").value;if(!date)return alert("Válassz dátumot!");
- let e={date,category:$("category").value,start:$("start").value,end:$("end").value,breakMinutes:Number($("breakMinutes").value)||0,planned:Number($("planned").value)||0,workplace:$("workplace").value||"Nincs megadva",bonus:Number($("bonus").value)||0,leaveHours:Number($("leaveHours").value)||0};
-  works=works.filter(x=>x.date!==date);works.push(e);selectedDate=date;persist();renderAll();alert("Napi bejegyzés elmentve.");
+ let e={
+ date,
+ category:$("category").value,
+ start:$("start").value,
+ end:$("end").value,
+ breakMinutes:Number($("breakMinutes").value)||0,
+ planned:Number($("planned").value)||0,
+ workplace:$("workplace").value||"Nincs megadva",
+ bonus:Number($("bonus").value)||0,
+ leaveHours:Number($("leaveHours").value)||0,
+ commuteTo:$("commuteTo").checked,
+ commuteHome:$("commuteHome").checked
+};
+    works=works.filter(x=>x.date!==date);works.push(e);selectedDate=date;persist();renderAll();alert("Napi bejegyzés elmentve.");
 }
 function deleteWork(){if(!editDate)return;works=works.filter(x=>x.date!==editDate);persist();newWork();renderAll()}
 function renderWeek(){
@@ -1852,13 +1900,28 @@ let bonusPay=c.bonus;
  let totalHours=workEntries.reduce((s,e)=>s+hours(e),0);
 
  let km=drives.filter(e=>e.date.startsWith(m))
-  .reduce((s,e)=>s+Number(e.km??Math.max(0,Number(e.endKm)-Number(e.startKm))),0);
-  
- let driving=drives.filter(e=>e.date.startsWith(m))
-   .reduce((s,e)=>s+duration(e.departure,e.arrival),0);
-  let drivingPay=driving*rate;
-let kmPay=km*7;
-let totalWithDriving=c.total+drivingPay+kmPay;
+ .reduce((s,e)=>s+Number(e.km??Math.max(0,Number(e.endKm)-Number(e.startKm))),0);
+
+let driving=drives.filter(e=>e.date.startsWith(m))
+ .reduce((s,e)=>s+duration(e.departure,e.arrival),0);
+
+let drivingPay=driving*rate;
+
+let kmPay=km*Number(settings.kmRate??7);
+
+// Munkába járás kilométereinek számítása
+let commuteTrips=workEntries.reduce((sum,e)=>{
+ if(e.workplace==="Műhely"){
+  return sum+2;
+ }
+
+ return sum+(e.commuteTo?1:0)+(e.commuteHome?1:0);
+},0);
+
+let commuteKm=commuteTrips*Number(settings.commuteDistance??0);
+let commutePay=commuteKm*Number(settings.commuteRate??30);
+
+let totalWithDriving=c.total+drivingPay+kmPay+commutePay;
 
  // Heti munkaórák
  let [year,month]=m.split("-").map(Number);
@@ -2043,7 +2106,8 @@ placeList.forEach(([name,h],i)=>{
  <div class="row entry"><span>Betegszabadság díja</span><strong>${money(sickPay)}</strong></div>
  <div class="row entry"><span>Bónusz</span><strong>${money(bonusPay)}</strong></div>
  <div class="row entry"><span>Vezetési idő díja</span><strong>${money(drivingPay)}</strong></div>
-<div class="row entry"><span>Kilométerpénz (7 Ft/km)</span><strong>${money(kmPay)}</strong></div>
+<div class="row entry"><span>Munkavégzés közbeni kilométerpénz (${Number(settings.kmRate??7)} Ft/km)</span><strong>${money(kmPay)}</strong></div>
+<div class="row entry"><span>Munkába járás támogatása (${Number(settings.commuteRate??30)} Ft/km)</span><strong>${money(commutePay)}</strong></div>
 <div class="row entry"><strong>Nettó munkabér</strong><strong>${money(c.total)}</strong></div>
 <div class="row entry final-total"><strong>Összesen kifizetendő (vezetéssel és kilométerpénzzel)</strong><strong>${money(totalWithDriving)}</strong></div>
 <h3>Munkaórák projektenként</h3>
@@ -2060,6 +2124,8 @@ placeList.forEach(([name,h],i)=>{
  <div class="row entry"><span>Szabadság</span><strong>${fmt(c.vac)} óra</strong></div>
  <div class="row entry"><span>Betegszabadság</span><strong>${fmt(c.sick)} óra</strong></div>
  <div class="row entry"><span>Vezetett kilométer</span><strong>${fmt(km)} km</strong></div>
+ <div class="row entry"><span>Munkába járás kilométere</span><strong>${fmt(commuteKm)} km</strong></div>
+<div class="row entry"><span>Munkába járások száma</span><strong>${commuteTrips} út</strong></div>
  <div class="row entry"><span>Vezetési idő</span><strong>${fmt(driving)} óra</strong></div>`;
 }
   function renderDriveCalendar(){
@@ -2291,10 +2357,12 @@ function handleWorkplaceChange(){
    select.value="";
   }
 
+  toggleWorkFields();
   return;
  }
 
  setPlannedFromProject();
+ toggleWorkFields();
 }
   function setPlannedFromProject(){
  let selected=$("workplace").value;
