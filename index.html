@@ -997,10 +997,9 @@ header::after {
 <label>Szünet (perc)</label><input type="number" id="breakMinutes" min="0" value="0">
 <label>Tervezett órák</label><input type="number" id="planned" min="0" max="24" step="0.5" value="8">
 <label>Projekt / munkavégzés helye</label>
-<input id="workplace" list="workplaceOptions"
- onchange="setPlannedFromProject()"
-  placeholder="Projekt vagy egyedi helyszín">
-<datalist id="workplaceOptions"></datalist>
+<select id="workplace" onchange="handleWorkplaceChange()">
+ <option value="">Válassz projektet vagy helyszínt</option>
+</select>
 <label>Napi bónusz (%)</label><input type="number" id="bonus" min="0" value="0">
 <p class="muted" id="workedPreview">Ledolgozott idő: 8,00 óra</p>
 </div>
@@ -1642,22 +1641,50 @@ function renderYearly(){
  ].map(x=>`<div class="row entry"><span>${x[0]}</span><strong>${x[1]}</strong></div>`).join("");
 }
 function renderProjectOptions(selectedValue=""){
- let input=$("workplace");
- let list=$("workplaceOptions");
+ let select=$("workplace");
+ if(!select)return;
 
- if(!input||!list)return;
+ let current=selectedValue||select.value;
 
- let current=selectedValue||input.value;
-
- list.innerHTML="";
+ select.innerHTML='<option value="">Válassz projektet vagy helyszínt</option>';
 
  projects.forEach(p=>{
   let option=document.createElement("option");
   option.value=p.name;
-  list.appendChild(option);
+  option.textContent=p.name;
+  select.appendChild(option);
  });
 
- input.value=current;
+ if(current && !projects.some(p=>p.name===current)){
+  let option=document.createElement("option");
+  option.value=current;
+  option.textContent=current;
+  select.appendChild(option);
+ }
+  function handleWorkplaceChange(){
+ let select=$("workplace");
+ if(!select)return;
+
+ if(select.value==="__other__"){
+  let place=prompt("Írd be az egyszeri munkavégzés helyét:");
+
+  if(place && place.trim()){
+   place=place.trim();
+
+   let option=document.createElement("option");
+   option.value=place;
+   option.textContent=place;
+
+   select.insertBefore(option,select.querySelector('option[value="__other__"]'));
+   select.value=place;
+  }else{
+   select.value="";
+  }
+
+  return;
+ }
+
+ setPlannedFromProject();
 }
   function setPlannedFromProject(){
  let selected=$("workplace").value;
