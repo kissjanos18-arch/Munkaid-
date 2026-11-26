@@ -1109,38 +1109,43 @@ button.primary{
 button.secondary{
  box-shadow:0 5px 15px rgba(60,100,160,.16);
 }
-  .month-navigation{
+ .month-navigation{
  display:flex;
  align-items:center;
  justify-content:center;
- gap:22px;
- margin:18px 0 22px;
+ gap:18px;
+ margin:16px 0 22px;
 }
 
 .month-navigation strong{
  font-size:25px;
  font-weight:800;
- color:#1d3557;
- min-width:170px;
+ color:#00e5ff;
+ min-width:180px;
  text-align:center;
  text-transform:capitalize;
+ text-shadow:
+  0 0 5px rgba(0,229,255,.8),
+  0 0 14px rgba(0,229,255,.5);
 }
 
 .month-navigation button{
- width:52px;
- height:52px;
- border:0;
+ width:38px;
+ height:38px;
+ border:1px solid #00d9ff;
  border-radius:50%;
- background:#2563eb;
- color:white;
- font-size:25px;
+ background:rgba(0,217,255,.12);
+ color:#00d9ff;
+ font-size:19px;
  font-weight:bold;
  cursor:pointer;
- box-shadow:0 4px 12px rgba(37,99,235,.25);
+ box-shadow:0 0 9px rgba(0,217,255,.25);
+ transition:.2s;
 }
 
 .month-navigation button:active{
  transform:scale(.92);
+ background:rgba(0,217,255,.28);
 }
 </style>
 </head>
