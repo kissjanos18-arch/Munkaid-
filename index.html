@@ -1530,16 +1530,13 @@ function showPage(p){
  if(p==="calendar")renderProjectOptions();
  if(p==="projects")renderProjects();
 
- document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===p));
+ document.querySelectorAll("nav button").forEach(b=>{
+  b.classList.toggle("active",b.dataset.page===p);
+ });
 
  if(p==="monthly")renderMonthly();
  if(p==="yearly")renderYearly();
-
- if(p==="driving"){
-  driveCalendarMonth=new Date(today()+"T12:00:00");
-  selectedDriveDate=today();
-  renderDrives();
- }
+ if(p==="driving")renderDrives();
 }
 function loadSettings(){
  $("employeeName").value=settings.name||"Kiss János";
